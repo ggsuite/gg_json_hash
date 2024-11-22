@@ -1,0 +1,14 @@
+name: gg_json_hash
+description: Hashes JSON objects deeply. Good or JSON comparison, sync and more.
+version: 1.0.0
+repository: https://github.com/inlavigo/gg_json_hash.git
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  path: ^1.8.0
+
+dev_dependencies:
+  lints: ^4.0.0
+  test: ^1.24.0
