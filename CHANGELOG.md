@@ -7,3 +7,4 @@
 - Initial boilerplate.
 - Add initial implementation
 - Add applyToString
+- Add example
