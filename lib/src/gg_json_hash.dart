@@ -45,6 +45,13 @@ class JsonHash {
     return copy;
   }
 
+  /// Writes hashes into a JSON string
+  String applyToString(String jsonString) {
+    final json = jsonDecode(jsonString) as Map<String, dynamic>;
+    final hashedJson = applyTo(json);
+    return jsonEncode(hashedJson);
+  }
+
   /// Calculates a SHA-256 hash of a string
   String calcHash(String string) {
     final digest = sha256.convert(utf8.encode(string));

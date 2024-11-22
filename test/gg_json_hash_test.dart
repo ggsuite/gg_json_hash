@@ -13,7 +13,7 @@ import 'example_json.dart';
 void main() {
   final calcHash = const JsonHash().calcHash;
 
-  group('hashJson', () {
+  group('JsonHash', () {
     group('with a simple json', () {
       group('containing only one key value pair', () {
         test('with a string value', () {
@@ -487,6 +487,14 @@ void main() {
 
           expect(message, 'Exception: Unsupported type: _Exception');
         });
+      });
+    });
+
+    group('applyToString()', () {
+      test('should add the hash to the json string', () {
+        const json = '{"key": "value"}';
+        final jsonString = const JsonHash().applyToString(json);
+        expect(jsonString, '{"key":"value","_hash":"5Dq88zdSRIOcAS+WM/lYYt"}');
       });
     });
   });

@@ -6,3 +6,4 @@
 
 - Initial boilerplate.
 - Add initial implementation
+- Add applyToString
