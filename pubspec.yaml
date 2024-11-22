@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   path: ^1.8.0
+  crypto: ^3.0.6
 
 dev_dependencies:
   lints: ^4.0.0
