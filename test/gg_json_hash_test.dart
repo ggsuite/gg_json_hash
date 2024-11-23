@@ -17,7 +17,7 @@ void main() {
     group('with a simple json', () {
       group('containing only one key value pair', () {
         test('with a string value', () {
-          final json = hashJson(const {'key': 'value'});
+          final json = addHashes(const {'key': 'value'});
           expect(json['key'], 'value');
           final expectedHash = calcHash('{"key":"value"}');
           expect(json['_hash'], expectedHash);
@@ -25,7 +25,7 @@ void main() {
         });
 
         test('with a int value', () {
-          final json = hashJson(const {'key': 1});
+          final json = addHashes(const {'key': 1});
           expect(json['key'], 1);
           final expectedHash = calcHash('{"key":1}');
           expect(json['_hash'], expectedHash);
@@ -33,7 +33,7 @@ void main() {
         });
 
         test('with a bool value', () {
-          final json = hashJson(const {'key': true});
+          final json = addHashes(const {'key': true});
           expect(json['key'], true);
           final expectedHash = calcHash('{"key":true}');
           expect(json['_hash'], expectedHash);
@@ -41,14 +41,14 @@ void main() {
         });
 
         test('with a long double value', () {
-          final json = hashJson(const {'key': 1.0123456789012345});
+          final json = addHashes(const {'key': 1.0123456789012345});
           final expectedHash = calcHash('{"key":1.0123456789}');
           expect(json['_hash'], expectedHash);
           expect(json['_hash'], 'Cj6IqsbT9fSKfeVVkytoqA');
         });
 
         test('with a short double value', () {
-          final json = hashJson(const {'key': 1.012000});
+          final json = addHashes(const {'key': 1.012000});
           final expectedHash = calcHash('{"key":1.012}');
           expect(json['_hash'], expectedHash);
           expect(json['_hash'], 'ppGtYoP5iHFqst5bPeAGMf');
@@ -56,7 +56,7 @@ void main() {
       });
 
       test('existing _hash should be overwritten', () {
-        final json = hashJson({
+        final json = addHashes({
           'key': 'value',
           '_hash': 'oldHash',
         });
@@ -70,12 +70,12 @@ void main() {
         test(
             'truncates the floating point numbers to "hashFloatingPrecision" '
             '10 decimal places', () {
-          final hash0 = hashJson(
+          final hash0 = addHashes(
             const {'key': 1.01234567890123456789},
             floatingPointPrecision: 9,
           )['_hash'];
 
-          final hash1 = hashJson(
+          final hash1 = addHashes(
             const {'key': 1.01234567890123456389},
             floatingPointPrecision: 9,
           )['_hash'];
@@ -102,8 +102,8 @@ void main() {
         late Map<String, dynamic> j1;
 
         setUpAll(() {
-          j0 = hashJson(json0);
-          j1 = hashJson(json1);
+          j0 = addHashes(json0);
+          j1 = addHashes(json1);
         });
 
         test('should create a string of key value pairs and hash it', () {
@@ -126,7 +126,7 @@ void main() {
     group('with a nested json', () {
       test('of level 1', () {
         // Hash an parent object containing one child object
-        final parent = hashJson(const {
+        final parent = addHashes(const {
           'key': 'value',
           'child': {
             'key': 'value',
@@ -148,7 +148,7 @@ void main() {
 
       test('of level 2', () {
         // Hash an parent object containing one child object
-        final parent = hashJson(const {
+        final parent = addHashes(const {
           'key': 'value',
           'child': {
             'key': 'value',
@@ -183,7 +183,7 @@ void main() {
 
     test('with complete json example', () {
       final json = jsonDecode(exampleJson) as Map<String, dynamic>;
-      final hashedJson = hashJson(json);
+      final hashedJson = addHashes(json);
 
       JsonEncoder encoder = const JsonEncoder.withIndent('  ');
       final hashedJsonString = encoder.convert(hashedJson);
@@ -196,7 +196,7 @@ void main() {
       group('on top level', () {
         group('containing only simple types', () {
           test('should convert all values to strings and hash it', () {
-            final json = hashJson({
+            final json = addHashes({
               'key': ['value', 1.0, true],
             });
 
@@ -213,7 +213,7 @@ void main() {
           group('should hash the nested objects', () {
             group('and use the hash instead of the stringified value', () {
               test('with a complicated array', () {
-                final json = hashJson({
+                final json = addHashes({
                   'array': [
                     'key',
                     1.0,
@@ -234,7 +234,7 @@ void main() {
               });
 
               test('with a simple array', () {
-                final json = hashJson({
+                final json = addHashes({
                   'array': [
                     {'key': 'value'},
                   ],
@@ -267,7 +267,7 @@ void main() {
 
         group('containing nested arrays', () {
           test('should hash the nested arrays', () {
-            final json = hashJson({
+            final json = addHashes({
               'array': [
                 ['key', 1.0, true],
                 'hello',
@@ -290,7 +290,7 @@ void main() {
         late String message;
 
         try {
-          hashJson({
+          addHashes({
             'key': Exception(),
           });
         } catch (e) {
@@ -495,6 +495,129 @@ void main() {
         const json = '{"key": "value"}';
         final jsonString = const JsonHash().applyToString(json);
         expect(jsonString, '{"key":"value","_hash":"5Dq88zdSRIOcAS+WM/lYYt"}');
+      });
+    });
+
+    group('with updateExistingHashes', () {
+      late Map<String, dynamic> json;
+
+      setUp(() {
+        json = {
+          'a': {
+            '_hash': 'hash_a',
+            'b': {
+              '_hash': 'hash_b',
+              'c': {
+                '_hash': 'hash_c',
+                'd': 'value',
+              },
+            },
+          },
+        };
+      });
+
+      bool allHashesChanged() {
+        return json['a']!['_hash'] != 'hash_a' &&
+            json['a']!['b']!['_hash'] != 'hash_b' &&
+            json['a']!['b']!['c']!['_hash'] != 'hash_c';
+      }
+
+      bool noHashesChanged() {
+        return json['a']!['_hash'] == 'hash_a' &&
+            json['a']!['b']!['_hash'] == 'hash_b' &&
+            json['a']!['b']!['c']!['_hash'] == 'hash_c';
+      }
+
+      List<String> changedHashes() {
+        final result = <String>[];
+        if (json['a']!['_hash'] != 'hash_a') {
+          result.add('a');
+        }
+
+        if (json['a']!['b']!['_hash'] != 'hash_b') {
+          result.add('b');
+        }
+
+        if (json['a']!['b']!['c']!['_hash'] != 'hash_c') {
+          result.add('c');
+        }
+
+        return result;
+      }
+
+      group('true', () {
+        test('should recalculate existing hashes', () {
+          addHashes(json, updateExistingHashes: true, inPlace: true);
+          expect(allHashesChanged(), isTrue);
+        });
+      });
+
+      group('false', () {
+        group('should not recalculate existing hashes', () {
+          test('with all objects having hashes', () {
+            addHashes(json, updateExistingHashes: false, inPlace: true);
+            expect(noHashesChanged(), isTrue);
+          });
+
+          test('with parents have no hashes', () {
+            json['a']!.remove('_hash');
+            addHashes(json, updateExistingHashes: false, inPlace: true);
+            expect(changedHashes(), ['a']);
+
+            json['a']!.remove('_hash');
+            json['a']['b']!.remove('_hash');
+            addHashes(json, updateExistingHashes: false, inPlace: true);
+            expect(changedHashes(), ['a', 'b']);
+          });
+        });
+      });
+    });
+
+    group('with inPlace', () {
+      group('false', () {
+        test('does not touch the original object', () {
+          final json = {
+            'key': 'value',
+          };
+
+          final hashedJson = addHashes(json, inPlace: false);
+          expect(
+            hashedJson,
+            {
+              'key': 'value',
+              '_hash': '5Dq88zdSRIOcAS+WM/lYYt',
+            },
+          );
+
+          expect(
+            json,
+            {
+              'key': 'value',
+            },
+          );
+        });
+      });
+
+      group('true', () {
+        test('writes hashes into original json', () {
+          final json = {
+            'key': 'value',
+          };
+
+          final hashedJson = addHashes(json, inPlace: true);
+          expect(
+            hashedJson,
+            {
+              'key': 'value',
+              '_hash': '5Dq88zdSRIOcAS+WM/lYYt',
+            },
+          );
+
+          expect(
+            json,
+            same(hashedJson),
+          );
+        });
       });
     });
   });

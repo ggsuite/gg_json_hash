@@ -12,15 +12,18 @@ import 'package:crypto/crypto.dart';
 
 // #############################################################################
 /// Deeply hashes a JSON object.
-Map<String, dynamic> hashJson(
+Map<String, dynamic> addHashes(
   Map<String, dynamic> json, {
+  bool updateExistingHashes = true,
   int floatingPointPrecision = 10,
   int hashLength = 22,
+  bool inPlace = false,
 }) {
   return JsonHash(
     hashLength: hashLength,
     floatingPointPrecision: floatingPointPrecision,
-  ).applyTo(json);
+    updateExistingHashes: updateExistingHashes,
+  ).applyTo(json, inPlace: inPlace);
 }
 
 // #############################################################################
@@ -30,7 +33,11 @@ class JsonHash {
   const JsonHash({
     this.hashLength = 22,
     this.floatingPointPrecision = 10,
+    this.updateExistingHashes = true,
   });
+
+  /// Replace existing hashes
+  final bool updateExistingHashes;
 
   /// The hash length in bytes
   final int hashLength;
@@ -39,8 +46,11 @@ class JsonHash {
   final int floatingPointPrecision;
 
   /// Writes hashes into the JSON object
-  Map<String, dynamic> applyTo(Map<String, dynamic> json) {
-    final copy = _copyJson(json);
+  Map<String, dynamic> applyTo(
+    Map<String, dynamic> json, {
+    bool inPlace = false,
+  }) {
+    final copy = inPlace ? json : _copyJson(json);
     _addHashesToObject(copy);
     return copy;
   }
@@ -48,7 +58,7 @@ class JsonHash {
   /// Writes hashes into a JSON string
   String applyToString(String jsonString) {
     final json = jsonDecode(jsonString) as Map<String, dynamic>;
-    final hashedJson = applyTo(json);
+    final hashedJson = applyTo(json, inPlace: true);
     return jsonEncode(hashedJson);
   }
 
@@ -67,6 +77,10 @@ class JsonHash {
   void _addHashesToObject(
     Map<String, dynamic> obj,
   ) {
+    if (!updateExistingHashes && obj.containsKey('_hash')) {
+      return;
+    }
+
     // Recursively process child elements
     obj.forEach((key, value) {
       if (value is Map<String, dynamic>) {
