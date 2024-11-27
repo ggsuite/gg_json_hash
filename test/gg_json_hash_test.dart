@@ -620,5 +620,53 @@ void main() {
         });
       });
     });
+
+    group('with recursive', () {
+      const json = {
+        'a': {
+          '_hash': 'hash_a',
+          'b': {
+            '_hash': 'hash_b',
+          },
+        },
+        'b': {
+          '_hash': 'hash_a',
+          'b': {
+            '_hash': 'hash_b',
+          },
+        },
+        '_hash': 'hash_0',
+      };
+
+      group('true', () {
+        test('should recalculate deeply all hashes', () {
+          final result = addHashes(
+            json,
+            recursive: true,
+          );
+
+          // Root as well as child hashes have changed
+          expect(result['_hash'], isNot('hash_0'));
+          expect(result['a']!['_hash'], isNot('hash_a'));
+          expect(result['a']!['b']!['_hash'], isNot('hash_b'));
+        });
+      });
+
+      group('false', () {
+        test('should only calc the first hash', () {
+          final result = addHashes(
+            json,
+            recursive: false,
+          );
+
+          // Root hash has changed
+          expect(result['_hash'], isNot('hash_0'));
+
+          // Child hashes have not changed
+          expect(result['a']!['_hash'], 'hash_a');
+          expect(result['a']!['b']!['_hash'], 'hash_b');
+        });
+      });
+    });
   });
 }

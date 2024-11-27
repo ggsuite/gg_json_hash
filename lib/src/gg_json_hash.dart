@@ -18,11 +18,13 @@ Map<String, dynamic> addHashes(
   int floatingPointPrecision = 10,
   int hashLength = 22,
   bool inPlace = false,
+  bool recursive = true,
 }) {
   return JsonHash(
     hashLength: hashLength,
     floatingPointPrecision: floatingPointPrecision,
     updateExistingHashes: updateExistingHashes,
+    recursive: recursive,
   ).applyTo(json, inPlace: inPlace);
 }
 
@@ -34,6 +36,7 @@ class JsonHash {
     this.hashLength = 22,
     this.floatingPointPrecision = 10,
     this.updateExistingHashes = true,
+    this.recursive = true,
   });
 
   /// Replace existing hashes
@@ -45,13 +48,16 @@ class JsonHash {
   /// Round floating point numbers to this precision before hashing
   final int floatingPointPrecision;
 
+  /// Recursively iterates into child objects
+  final bool recursive;
+
   /// Writes hashes into the JSON object
   Map<String, dynamic> applyTo(
     Map<String, dynamic> json, {
     bool inPlace = false,
   }) {
     final copy = inPlace ? json : _copyJson(json);
-    _addHashesToObject(copy);
+    _addHashesToObject(copy, recursive);
     return copy;
   }
 
@@ -76,6 +82,7 @@ class JsonHash {
   /// Recursively adds hashes to a nested object.
   void _addHashesToObject(
     Map<String, dynamic> obj,
+    bool recursive,
   ) {
     if (!updateExistingHashes && obj.containsKey('_hash')) {
       return;
@@ -83,8 +90,8 @@ class JsonHash {
 
     // Recursively process child elements
     obj.forEach((key, value) {
-      if (value is Map<String, dynamic>) {
-        _addHashesToObject(value);
+      if (recursive && value is Map<String, dynamic>) {
+        _addHashesToObject(value, recursive);
       } else if (value is List<dynamic>) {
         _processList(value);
       }
@@ -147,7 +154,7 @@ class JsonHash {
   void _processList(List<dynamic> list) {
     for (final element in list) {
       if (element is Map<String, dynamic>) {
-        _addHashesToObject(element);
+        _addHashesToObject(element, recursive);
       } else if (element is List<dynamic>) {
         _processList(element);
       }

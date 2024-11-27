@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Add recursive flag for adding hashes
+
 ## [1.1.0] - 2024-11-23
 
 ### Added
@@ -24,5 +30,6 @@
 
 - Increase version
 
+[Unreleased]: https://github.com/inlavigo/gg_json_hash/compare/1.1.0...HEAD
 [1.1.0]: https://github.com/inlavigo/gg_json_hash/compare/1.0.2...1.1.0
 [1.0.2]: https://github.com/inlavigo/gg_json_hash/tag/%tag

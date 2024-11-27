@@ -1,22 +1,22 @@
 {
   "canCommit": {
     "success": {
-      "hash": 3848605087147
+      "hash": 3848533948459
     }
   },
   "doCommit": {
     "success": {
-      "hash": 3848605087147
+      "hash": 3848533948459
     }
   },
   "canPush": {
     "success": {
-      "hash": 3848605087147
+      "hash": 3848533948459
     }
   },
   "doPush": {
     "success": {
-      "hash": 3848605087147
+      "hash": 3848533948459
     }
   },
   "canPublish": {
