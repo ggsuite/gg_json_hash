@@ -68,10 +68,10 @@ class JsonHash {
     return jsonEncode(hashedJson);
   }
 
-  /// Calculates a SHA-256 hash of a string
+  /// Calculates a SHA-256 hash of a string with base64 url
   String calcHash(String string) {
     final digest = sha256.convert(utf8.encode(string));
-    return base64Encode(digest.bytes).substring(0, hashLength);
+    return base64UrlEncode(digest.bytes).substring(0, hashLength);
   }
 
   // ...........................................................................

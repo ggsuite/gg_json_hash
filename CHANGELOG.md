@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2024-11-27
+
+### Changed
+
+- Make hash url save
+
 ## [1.1.2] - 2024-11-27
 
 ### Added
@@ -36,6 +42,7 @@
 
 - Increase version
 
+[1.1.3]: https://github.com/inlavigo/gg_json_hash/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/inlavigo/gg_json_hash/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/inlavigo/gg_json_hash/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/inlavigo/gg_json_hash/compare/1.0.2...1.1.0

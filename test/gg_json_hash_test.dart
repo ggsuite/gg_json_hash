@@ -21,7 +21,7 @@ void main() {
           expect(json['key'], 'value');
           final expectedHash = calcHash('{"key":"value"}');
           expect(json['_hash'], expectedHash);
-          expect(json['_hash'], '5Dq88zdSRIOcAS+WM/lYYt');
+          expect(json['_hash'], '5Dq88zdSRIOcAS-WM_lYYt');
         });
 
         test('with a int value', () {
@@ -63,7 +63,7 @@ void main() {
         expect(json['key'], 'value');
         final expectedHash = calcHash('{"key":"value"}');
         expect(json['_hash'], expectedHash);
-        expect(json['_hash'], '5Dq88zdSRIOcAS+WM/lYYt');
+        expect(json['_hash'], '5Dq88zdSRIOcAS-WM_lYYt');
       });
 
       group('containing floating point numbers', () {
@@ -230,7 +230,7 @@ void main() {
                 );
 
                 expect(json['_hash'], expectedHash);
-                expect(json['_hash'], 'THYzkNBHbipTuGn3AEzyyH');
+                expect(json['_hash'], 'RhdI6mef3-0PVMG0sdeScv');
               });
 
               test('with a simple array', () {
@@ -249,7 +249,7 @@ void main() {
                 expect(item0['_hash'], itemHash);
                 expect(
                   itemHash,
-                  '5Dq88zdSRIOcAS+WM/lYYt',
+                  '5Dq88zdSRIOcAS-WM_lYYt',
                 );
 
                 // Did use the array item hash for the array hash?
@@ -259,7 +259,7 @@ void main() {
                 );
 
                 expect(json['_hash'], expectedHash);
-                expect(json['_hash'], 'i5C5fpWlcOXE363N3cABei');
+                expect(json['_hash'], 'zYcZBAUGLgR0ygMxi0V5ZT');
               });
             });
           });
@@ -494,7 +494,7 @@ void main() {
       test('should add the hash to the json string', () {
         const json = '{"key": "value"}';
         final jsonString = const JsonHash().applyToString(json);
-        expect(jsonString, '{"key":"value","_hash":"5Dq88zdSRIOcAS+WM/lYYt"}');
+        expect(jsonString, '{"key":"value","_hash":"5Dq88zdSRIOcAS-WM_lYYt"}');
       });
     });
 
@@ -585,7 +585,7 @@ void main() {
             hashedJson,
             {
               'key': 'value',
-              '_hash': '5Dq88zdSRIOcAS+WM/lYYt',
+              '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
             },
           );
 
@@ -609,7 +609,7 @@ void main() {
             hashedJson,
             {
               'key': 'value',
-              '_hash': '5Dq88zdSRIOcAS+WM/lYYt',
+              '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
             },
           );
 
@@ -700,7 +700,7 @@ void main() {
               expect(
                 message,
                 'Exception: Hash "wrongHash" is wrong. '
-                'Should be "RBNvo1WzZ4oRRq0W9+hknp".',
+                'Should be "RBNvo1WzZ4oRRq0W9-hknp".',
               );
             });
           });
@@ -708,7 +708,7 @@ void main() {
           group('does not throw', () {
             test('when hash is correct', () {
               JsonHash.validate({
-                '_hash': 'RBNvo1WzZ4oRRq0W9+hknp',
+                '_hash': 'RBNvo1WzZ4oRRq0W9-hknp',
               });
             });
           });
@@ -746,7 +746,7 @@ void main() {
               expect(
                 message,
                 'Exception: Hash "wrongHash" is wrong. '
-                'Should be "5Dq88zdSRIOcAS+WM/lYYt".',
+                'Should be "5Dq88zdSRIOcAS-WM_lYYt".',
               );
             });
           });
@@ -755,7 +755,7 @@ void main() {
             test('when hash is correct', () {
               JsonHash.validate({
                 'key': 'value',
-                '_hash': '5Dq88zdSRIOcAS+WM/lYYt',
+                '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
               });
             });
           });
@@ -767,12 +767,12 @@ void main() {
           setUp(
             () {
               json = <String, dynamic>{
-                '_hash': 'MklEbs3sXanD93iiW1W2nJ',
+                '_hash': 'oEE88mHZ241BRlAfyG8n9X',
                 'parent': {
-                  '_hash': 'xmq1rgutlAWuRcswVUwAz6',
+                  '_hash': '3Wizz29YgTIc1LRaN9fNfK',
                   'child': {
                     'key': 'value',
-                    '_hash': '5Dq88zdSRIOcAS+WM/lYYt',
+                    '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
                   },
                 },
               };
@@ -844,7 +844,7 @@ void main() {
                 expect(
                   message,
                   'Exception: Hash "wrongHash" is wrong. '
-                  'Should be "MklEbs3sXanD93iiW1W2nJ".',
+                  'Should be "oEE88mHZ241BRlAfyG8n9X".',
                 );
               });
 
@@ -861,7 +861,7 @@ void main() {
                 expect(
                   message,
                   'Exception: Hash at /parent "wrongHash" is wrong. '
-                  'Should be "xmq1rgutlAWuRcswVUwAz6".',
+                  'Should be "3Wizz29YgTIc1LRaN9fNfK".',
                 );
               });
 
@@ -878,7 +878,7 @@ void main() {
                 expect(
                   message,
                   'Exception: Hash at /parent/child "wrongHash" is wrong. '
-                  'Should be "5Dq88zdSRIOcAS+WM/lYYt".',
+                  'Should be "5Dq88zdSRIOcAS-WM_lYYt".',
                 );
               });
             });
@@ -897,12 +897,12 @@ void main() {
           setUp(
             () {
               json = <String, dynamic>{
-                '_hash': 'jkw9NC9ad/5w9EKDPu3dUR',
+                '_hash': 'IoJ_C8gm8uVu8ExpS7ZNPY',
                 'parent': [
                   {
-                    '_hash': 'TvOGmS3dvlXVTUs0crIfKm',
+                    '_hash': 'kDsVfUjnkXU7_KXqp-PuyA',
                     'child': [
-                      {'key': 'value', '_hash': '5Dq88zdSRIOcAS+WM/lYYt'},
+                      {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
                     ],
                   }
                 ],
@@ -959,7 +959,7 @@ void main() {
                 expect(
                   message,
                   'Exception: Hash at /parent/0 "wrongHash" is wrong. '
-                  'Should be "TvOGmS3dvlXVTUs0crIfKm".',
+                  'Should be "kDsVfUjnkXU7_KXqp-PuyA".',
                 );
               });
 
@@ -976,7 +976,7 @@ void main() {
                 expect(
                   message,
                   'Exception: Hash at /parent/0/child/0 "wrongHash" is wrong. '
-                  'Should be "5Dq88zdSRIOcAS+WM/lYYt".',
+                  'Should be "5Dq88zdSRIOcAS-WM_lYYt".',
                 );
               });
             });

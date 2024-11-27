@@ -78,7 +78,8 @@ const exampleJson = '''{
 }
 ''';
 
-const exampleJsonWithHashes = '''{
+const exampleJsonWithHashes = '''
+{
   "layerA": {
     "data": [
       {
@@ -89,10 +90,10 @@ const exampleJsonWithHashes = '''{
       {
         "w": 700,
         "w1": 100,
-        "_hash": "Jf177UAntzI4rIjKiU/MVt"
+        "_hash": "Jf177UAntzI4rIjKiU_MVt"
       }
     ],
-    "_hash": "yqSa5ZxNeNTMnP5i6KWSmd"
+    "_hash": "qCgcNNF3wJPfx0rkRDfoSY"
   },
   "layerB": {
     "data": [
@@ -111,7 +112,7 @@ const exampleJsonWithHashes = '''{
         "_hash": "KvMHhk1dYYQ2o5Srt6pTUN"
       }
     ],
-    "_hash": "Z4km/FzQoxyck+YHQDZMtV"
+    "_hash": "Z4km_FzQoxyck-YHQDZMtV"
   },
   "layerD": {
     "data": [
@@ -120,10 +121,10 @@ const exampleJsonWithHashes = '''{
         "wMax": 900,
         "w1Min": 0,
         "w1Max": 900,
-        "_hash": "6uw0BSIllrk6DuKyvQh+Rg"
+        "_hash": "6uw0BSIllrk6DuKyvQh-Rg"
       }
     ],
-    "_hash": "rzLBCSXvxbmGujOhxGhrUm"
+    "_hash": "qFDAzWUsTnqICnpc_rJtax"
   },
   "layerE": {
     "data": [
@@ -153,10 +154,10 @@ const exampleJsonWithHashes = '''{
       {
         "type": "XYZABC",
         "name": "Base Cabinet 23.5",
-        "_hash": "DEyuShUHDpWSJ7Rq/a3uz6"
+        "_hash": "DEyuShUHDpWSJ7Rq_a3uz6"
       }
     ],
-    "_hash": "RFZnY+Buvt2ECUnahPpIQ0"
+    "_hash": "3meyGs7XhOh8gWFNQFYZDI"
   },
-  "_hash": "D9Yt2C4/S4DemwBtAElAa2"
+  "_hash": "OmmdaqCAhcIKnDm7lT-_gI"
 }''';
