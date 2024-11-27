@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.1] - 2024-11-27
 
 ### Added
 
@@ -30,6 +30,6 @@
 
 - Increase version
 
-[Unreleased]: https://github.com/inlavigo/gg_json_hash/compare/1.1.0...HEAD
+[1.1.1]: https://github.com/inlavigo/gg_json_hash/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/inlavigo/gg_json_hash/compare/1.0.2...1.1.0
 [1.0.2]: https://github.com/inlavigo/gg_json_hash/tag/%tag
