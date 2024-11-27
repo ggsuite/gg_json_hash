@@ -667,6 +667,328 @@ void main() {
           expect(result['a']!['b']!['_hash'], 'hash_b');
         });
       });
+
+      group('validate', () {
+        group('with an empty json', () {
+          group('throws', () {
+            test('when no hash is given', () {
+              late final String message;
+
+              try {
+                JsonHash.validate({});
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                'Exception: Hash is missing.',
+              );
+            });
+
+            test('when hash is wrong', () {
+              late final String message;
+
+              try {
+                JsonHash.validate({
+                  '_hash': 'wrongHash',
+                });
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                'Exception: Hash "wrongHash" is wrong. '
+                'Should be "RBNvo1WzZ4oRRq0W9+hknp".',
+              );
+            });
+          });
+
+          group('does not throw', () {
+            test('when hash is correct', () {
+              JsonHash.validate({
+                '_hash': 'RBNvo1WzZ4oRRq0W9+hknp',
+              });
+            });
+          });
+        });
+
+        group('with an single level json', () {
+          group('throws', () {
+            test('when no hash is given', () {
+              late final String message;
+
+              try {
+                JsonHash.validate({'key': 'value'});
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                'Exception: Hash is missing.',
+              );
+            });
+
+            test('when hash is wrong', () {
+              late final String message;
+
+              try {
+                JsonHash.validate({
+                  'key': 'value',
+                  '_hash': 'wrongHash',
+                });
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                'Exception: Hash "wrongHash" is wrong. '
+                'Should be "5Dq88zdSRIOcAS+WM/lYYt".',
+              );
+            });
+          });
+
+          group('does not throw', () {
+            test('when hash is correct', () {
+              JsonHash.validate({
+                'key': 'value',
+                '_hash': '5Dq88zdSRIOcAS+WM/lYYt',
+              });
+            });
+          });
+        });
+
+        group('with an deeply nested json', () {
+          late Map<String, dynamic> json;
+
+          setUp(
+            () {
+              json = <String, dynamic>{
+                '_hash': 'MklEbs3sXanD93iiW1W2nJ',
+                'parent': {
+                  '_hash': 'xmq1rgutlAWuRcswVUwAz6',
+                  'child': {
+                    'key': 'value',
+                    '_hash': '5Dq88zdSRIOcAS+WM/lYYt',
+                  },
+                },
+              };
+            },
+          );
+
+          group('throws', () {
+            group('when no hash is given', () {
+              test('at the root', () {
+                late final String message;
+                json.remove('_hash');
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash is missing.',
+                );
+              });
+
+              test('at the parent', () {
+                late final String message;
+                json['parent']!.remove('_hash');
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash at /parent is missing.',
+                );
+              });
+
+              test('at the child', () {
+                late final String message;
+                json['parent']!['child'].remove('_hash');
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash at /parent/child is missing.',
+                );
+              });
+            });
+
+            group('when hash is wrong', () {
+              test('at the root', () {
+                late final String message;
+                json['_hash'] = 'wrongHash';
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash "wrongHash" is wrong. '
+                  'Should be "MklEbs3sXanD93iiW1W2nJ".',
+                );
+              });
+
+              test('at the parent', () {
+                late final String message;
+                json['parent']!['_hash'] = 'wrongHash';
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash at /parent "wrongHash" is wrong. '
+                  'Should be "xmq1rgutlAWuRcswVUwAz6".',
+                );
+              });
+
+              test('at the child', () {
+                late final String message;
+                json['parent']!['child']!['_hash'] = 'wrongHash';
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash at /parent/child "wrongHash" is wrong. '
+                  'Should be "5Dq88zdSRIOcAS+WM/lYYt".',
+                );
+              });
+            });
+
+            group('not', () {
+              test('when hash is correct', () {
+                JsonHash.validate(json);
+              });
+            });
+          });
+        });
+
+        group('with an deeply nested json with child array', () {
+          late Map<String, dynamic> json;
+
+          setUp(
+            () {
+              json = <String, dynamic>{
+                '_hash': 'jkw9NC9ad/5w9EKDPu3dUR',
+                'parent': [
+                  {
+                    '_hash': 'TvOGmS3dvlXVTUs0crIfKm',
+                    'child': [
+                      {'key': 'value', '_hash': '5Dq88zdSRIOcAS+WM/lYYt'},
+                    ],
+                  }
+                ],
+              };
+            },
+          );
+
+          group('throws', () {
+            group('when no hash is given', () {
+              test('at the parent', () {
+                late final String message;
+                json['parent']![0].remove('_hash');
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash at /parent/0 is missing.',
+                );
+              });
+
+              test('at the child', () {
+                late final String message;
+                json['parent']![0]['child'][0].remove('_hash');
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash at /parent/0/child/0 is missing.',
+                );
+              });
+            });
+
+            group('when hash is wrong', () {
+              test('at the parent', () {
+                late final String message;
+                json['parent']![0]['_hash'] = 'wrongHash';
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash at /parent/0 "wrongHash" is wrong. '
+                  'Should be "TvOGmS3dvlXVTUs0crIfKm".',
+                );
+              });
+
+              test('at the child', () {
+                late final String message;
+                json['parent']![0]['child']![0]['_hash'] = 'wrongHash';
+
+                try {
+                  JsonHash.validate(json);
+                } catch (e) {
+                  message = e.toString();
+                }
+
+                expect(
+                  message,
+                  'Exception: Hash at /parent/0/child/0 "wrongHash" is wrong. '
+                  'Should be "5Dq88zdSRIOcAS+WM/lYYt".',
+                );
+              });
+            });
+
+            group('not', () {
+              test('when hash is correct', () {
+                JsonHash.validate(json);
+              });
+            });
+          });
+        });
+      });
     });
   });
 }

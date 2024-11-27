@@ -74,11 +74,67 @@ class JsonHash {
     return base64Encode(digest.bytes).substring(0, hashLength);
   }
 
+  // ...........................................................................
+  /// Throws if hashes are not correct
+  static void validate(Map<String, dynamic> json) {
+    // Check the hash of the high level element
+    final jsonWithCorrectHashes = addHashes(json);
+    _validate(json, jsonWithCorrectHashes, '');
+  }
+
   // ######################
   // Private
   // ######################
 
-// ...........................................................................
+  // ...........................................................................
+  static void _validate(
+    Map<String, dynamic> jsonIs,
+    Map<String, dynamic> jsonShould,
+    String path,
+  ) {
+    // Check the hashes of the parent element
+    final expectedHash = jsonShould['_hash'] as String;
+    final actualHash = jsonIs['_hash'] as String?;
+
+    if (actualHash == null) {
+      final pathHint = path.isEmpty ? '' : ' at $path';
+      throw Exception('Hash$pathHint is missing.');
+    }
+
+    if (expectedHash != actualHash) {
+      final pathHint = path.isEmpty ? '' : ' at $path';
+      throw Exception(
+        'Hash$pathHint "$actualHash" is wrong. Should be "$expectedHash".',
+      );
+    }
+
+    // Check the hashes of the child element
+    // Check the hashes of the child elements
+    for (final item in jsonIs.entries) {
+      if (item.key == '_hash') continue;
+      if (item.value is Map<String, dynamic>) {
+        final childIs = item.value as Map<String, dynamic>;
+        final childShould = jsonShould[item.key] as Map<String, dynamic>;
+        _validate(childIs, childShould, '$path/${item.key}');
+      } else if (item.value is List<dynamic>) {
+        for (var i = 0; i < (item.value as List<dynamic>).length; i++) {
+          if (item.value[i] is Map<String, dynamic>) {
+            final itemIs = item.value[i] as Map<String, dynamic>;
+            final itemShould = (jsonShould[item.key] as List<dynamic>)[i]
+                as Map<String, dynamic>;
+
+            _validate(
+              itemIs,
+              itemShould,
+              '$path/${item.key}/$i',
+            );
+          }
+        }
+      }
+    }
+  }
+
+  // ...........................................................................
   /// Recursively adds hashes to a nested object.
   void _addHashesToObject(
     Map<String, dynamic> obj,
@@ -90,7 +146,11 @@ class JsonHash {
 
     // Recursively process child elements
     obj.forEach((key, value) {
-      if (recursive && value is Map<String, dynamic>) {
+      if (value is Map<String, dynamic>) {
+        final existingHash = value['_hash'];
+        if (existingHash != null && !recursive) {
+          return;
+        }
         _addHashesToObject(value, recursive);
       } else if (value is List<dynamic>) {
         _processList(value);
