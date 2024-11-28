@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4] - 2024-11-28
+
+### Removed
+
+- Remove path dependency
+
 ## [1.1.3] - 2024-11-27
 
 ### Changed
@@ -42,6 +48,7 @@
 
 - Increase version
 
+[1.1.4]: https://github.com/inlavigo/gg_json_hash/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/inlavigo/gg_json_hash/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/inlavigo/gg_json_hash/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/inlavigo/gg_json_hash/compare/1.1.0...1.1.1
