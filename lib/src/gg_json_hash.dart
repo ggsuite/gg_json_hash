@@ -169,7 +169,7 @@ class JsonHash {
         objToHash[key] = value['_hash'] as String;
       } else if (value is List<dynamic>) {
         objToHash[key] = _flattenList(value);
-      } else if (value is double) {
+      } else if (value is num) {
         objToHash[key] = _truncate(value, floatingPointPrecision);
       } else if (_isBasicType(value)) {
         objToHash[key] = value;
@@ -266,21 +266,30 @@ class JsonHash {
 
   // ...........................................................................
   /// Turns a double into a string with a given precision.
-  static double _truncate(
-    double value,
+  static num _truncate(
+    num value,
     int precision,
   ) {
+    if (value is int) {
+      return value;
+    }
+
     String result = value.toString();
     final parts = result.split('.');
     final integerPart = parts[0];
     final commaParts = parts[1];
 
-    final truncatedCommaParts = commaParts.length > precision
+    var truncatedCommaParts = commaParts.length > precision
         ? commaParts.substring(0, precision)
         : commaParts;
 
+    // Remove trailing zeros
+    if (truncatedCommaParts.endsWith('0')) {
+      truncatedCommaParts = truncatedCommaParts.replaceAll(RegExp(r'0+$'), '');
+    }
+
     if (truncatedCommaParts.isEmpty) {
-      return double.parse(integerPart);
+      return double.parse(integerPart).toInt();
     }
 
     result = '$integerPart.$truncatedCommaParts';

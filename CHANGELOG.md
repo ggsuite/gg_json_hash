@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- BREAKING CHANGE: Fix floating point issues. Improve compatibility with Javascript.
+
 ## [1.1.4] - 2024-11-28
 
 ### Removed
@@ -48,6 +54,7 @@
 
 - Increase version
 
+[Unreleased]: https://github.com/inlavigo/gg_json_hash/compare/1.1.4...HEAD
 [1.1.4]: https://github.com/inlavigo/gg_json_hash/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/inlavigo/gg_json_hash/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/inlavigo/gg_json_hash/compare/1.1.1...1.1.2

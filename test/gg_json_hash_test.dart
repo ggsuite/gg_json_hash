@@ -32,6 +32,14 @@ void main() {
           expect(json['_hash'], 't4HVsGBJblqznOBwy6IeLt');
         });
 
+        test('with a double value without commas', () {
+          final json = addHashes(const {'key': 1.000});
+          expect(json['key'], 1);
+          final expectedHash = calcHash('{"key":1}');
+          expect(json['_hash'], expectedHash);
+          expect(json['_hash'], 't4HVsGBJblqznOBwy6IeLt');
+        });
+
         test('with a bool value', () {
           final json = addHashes(const {'key': true});
           expect(json['key'], true);
@@ -80,8 +88,10 @@ void main() {
             floatingPointPrecision: 9,
           )['_hash'];
           final expectedHash = calcHash('{"key":1.012345678}');
+
           expect(hash0, hash1);
           expect(hash0, expectedHash);
+          expect(hash0, 'KTqI1AvWb3gI6dYA5HPPMx');
         });
       });
 
@@ -108,7 +118,7 @@ void main() {
 
         test('should create a string of key value pairs and hash it', () {
           final expectedHash = calcHash(
-            '{"a":"value","b":1.0,"c":true}',
+            '{"a":"value","b":1,"c":true}',
           );
 
           expect(j0['_hash'], expectedHash);
@@ -427,28 +437,31 @@ void main() {
       });
 
       group('_truncate(double, precision)', () {
-        final toTruncatedString = JsonHash.privateMethods['_truncate'] as double
-            Function(double, int);
+        final truncate =
+            JsonHash.privateMethods['_truncate'] as num Function(double, int);
 
         test('truncates commas but only if precision exceeds precision', () {
-          expect(toTruncatedString(1.23456789, 2), 1.23);
-          expect(toTruncatedString(1.23456789, 3), 1.234);
-          expect(toTruncatedString(1.23456789, 4), 1.2345);
-          expect(toTruncatedString(1.23456789, 5), 1.23456);
-          expect(toTruncatedString(1.23456789, 6), 1.234567);
-          expect(toTruncatedString(1.23456789, 7), 1.2345678);
-          expect(toTruncatedString(1.23456789, 8), 1.23456789);
-          expect(toTruncatedString(1.12, 1), 1.1);
-          expect(toTruncatedString(1.12, 2), 1.12);
-          expect(toTruncatedString(1.12, 3), 1.12);
-          expect(toTruncatedString(1.12, 4), 1.12);
+          expect(truncate(1.0, 5), 1);
+          expect(truncate(1, 5), 1);
+
+          expect(truncate(1.23456789, 2), 1.23);
+          expect(truncate(1.23456789, 3), 1.234);
+          expect(truncate(1.23456789, 4), 1.2345);
+          expect(truncate(1.23456789, 5), 1.23456);
+          expect(truncate(1.23456789, 6), 1.234567);
+          expect(truncate(1.23456789, 7), 1.2345678);
+          expect(truncate(1.23456789, 8), 1.23456789);
+          expect(truncate(1.12, 1), 1.1);
+          expect(truncate(1.12, 2), 1.12);
+          expect(truncate(1.12, 3), 1.12);
+          expect(truncate(1.12, 4), 1.12);
         });
 
         test('does not add additional commas', () {
-          expect(toTruncatedString(1.0, 0), 1);
-          expect(toTruncatedString(1.0, 1), 1.0);
-          expect(toTruncatedString(1.0, 2), 1.0);
-          expect(toTruncatedString(1.0, 3), 1.0);
+          expect(truncate(1.0, 0), 1);
+          expect(truncate(1.0, 1), 1.0);
+          expect(truncate(1.0, 2), 1.0);
+          expect(truncate(1.0, 3), 1.0);
         });
       });
 
