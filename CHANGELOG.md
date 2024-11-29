@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.1] - 2024-11-29
+
+### Fixed
+
+- Fix typo in README
+
 ## [2.0.0] - 2024-11-29
 
 ### Changed
@@ -58,6 +64,7 @@
 
 - Increase version
 
+[2.0.1]: https://github.com/inlavigo/gg_json_hash/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/inlavigo/gg_json_hash/compare/1.1.4...2.0.0
 [1.1.4]: https://github.com/inlavigo/gg_json_hash/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/inlavigo/gg_json_hash/compare/1.1.2...1.1.3

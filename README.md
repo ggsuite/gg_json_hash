@@ -1,6 +1,6 @@
 # gg_json_hash
 
-`gg_json_hash` is a lightweight npm package designed to traverse JSON data
+`gg_json_hash` is a lightweight dart package designed to traverse JSON data
 structures and add unique hash identifiers to all objects within them.
 
 ![teaser.webp](https://github.com/inlavigo/gg_json_hash/raw/main/teaser.webp)
