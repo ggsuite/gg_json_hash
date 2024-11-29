@@ -6,6 +6,10 @@
 
 - BREAKING CHANGE: Fix floating point issues. Improve compatibility with Javascript.
 
+### Fixed
+
+- Fix small issues with floating point precision. Add README.md and example.
+
 ## [1.1.4] - 2024-11-28
 
 ### Removed

@@ -76,9 +76,9 @@ class JsonHash {
 
   // ...........................................................................
   /// Throws if hashes are not correct
-  static void validate(Map<String, dynamic> json) {
+  void validate(Map<String, dynamic> json) {
     // Check the hash of the high level element
-    final jsonWithCorrectHashes = addHashes(json);
+    final jsonWithCorrectHashes = applyTo(json);
     _validate(json, jsonWithCorrectHashes, '');
   }
 
@@ -169,10 +169,8 @@ class JsonHash {
         objToHash[key] = value['_hash'] as String;
       } else if (value is List<dynamic>) {
         objToHash[key] = _flattenList(value);
-      } else if (value is num) {
-        objToHash[key] = _truncate(value, floatingPointPrecision);
       } else if (_isBasicType(value)) {
-        objToHash[key] = value;
+        objToHash[key] = _convertBasicType(value, floatingPointPrecision);
       } else {
         // coverage:ignore-start
         throw Exception('Unsupported type: ${value.runtimeType}');
@@ -191,7 +189,24 @@ class JsonHash {
     obj['_hash'] = hash;
   }
 
-// ...........................................................................
+  // ...........................................................................
+  static dynamic _convertBasicType(
+    dynamic value,
+    int floatingPointPrecision,
+  ) {
+    if (value is String) {
+      return value;
+    }
+    if (value is num) {
+      return _truncate(value, floatingPointPrecision);
+    } else if (value is bool) {
+      return value;
+    } else {
+      throw Exception('Unsupported type: ${value.runtimeType}');
+    }
+  }
+
+  // ...........................................................................
   /// Builds a representation of a list for hashing.
   List<dynamic> _flattenList(List<dynamic> list) {
     var flattenedList = <dynamic>[];
@@ -202,7 +217,7 @@ class JsonHash {
       } else if (element is List<dynamic>) {
         flattenedList.add(_flattenList(element));
       } else if (_isBasicType(element)) {
-        flattenedList.add(element.toString());
+        flattenedList.add(_convertBasicType(element, floatingPointPrecision));
       }
     }
 
@@ -317,7 +332,7 @@ class JsonHash {
     return '{${map.entries.map(
           (e) => '"${e.key}"'
               ':${encodeValue(e.value)}',
-        ).join(",")}}';
+        ).join(',')}}';
   }
 
   // ...........................................................................
@@ -328,5 +343,6 @@ class JsonHash {
         '_isBasicType': _isBasicType,
         '_truncate': _truncate,
         '_jsonString': _jsonString,
+        '_convertBasicType': _convertBasicType,
       };
 }

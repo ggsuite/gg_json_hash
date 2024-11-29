@@ -11,7 +11,8 @@ import 'package:test/test.dart';
 import 'example_json.dart';
 
 void main() {
-  final calcHash = const JsonHash().calcHash;
+  const jh = JsonHash();
+  final calcHash = jh.calcHash;
 
   group('JsonHash', () {
     group('with a simple json', () {
@@ -211,11 +212,11 @@ void main() {
             });
 
             final expectedHash = calcHash(
-              '{"key":["value","1.0","true"]}',
+              '{"key":["value",1,true]}',
             );
 
             expect(json['_hash'], expectedHash);
-            expect(json['_hash'], '1DJgJ9oBYJWG04HMShLE9o');
+            expect(json['_hash'], 'nbNb1YfpgqnPfyFTyCQ5YF');
           });
         });
 
@@ -236,11 +237,12 @@ void main() {
                 final h0 = calcHash('{"key0":"value0"}');
                 final h1 = calcHash('{"key1":"value1"}');
                 final expectedHash = calcHash(
-                  '{"array":["key","1.0","true","$h1","$h0"]}',
+                  // '{"array":["key",1,true,"$h0","$h1"]}',
+                  '{"array":["key",1,true,"$h1","$h0"]}',
                 );
 
                 expect(json['_hash'], expectedHash);
-                expect(json['_hash'], 'RhdI6mef3-0PVMG0sdeScv');
+                expect(json['_hash'], '13h_Z0wZCF4SQsTyMyq5dV');
               });
 
               test('with a simple array', () {
@@ -285,11 +287,11 @@ void main() {
             });
 
             final jsonHash = calcHash(
-              '{"array":[["key","1.0","true"],"hello"]}',
+              '{"array":[["key",1,true],"hello"]}',
             );
 
             expect(json['_hash'], jsonHash);
-            expect(json['_hash'], 'TPZRhkc7IDTK8EftrWmMSw');
+            expect(json['_hash'], '1X_6COC1sP5ECuHvKtVoDT');
           });
         });
       });
@@ -501,6 +503,38 @@ void main() {
           expect(message, 'Exception: Unsupported type: _Exception');
         });
       });
+
+      group('_convertBasicType', () {
+        final convertBasicType =
+            JsonHash.privateMethods['_convertBasicType'] as dynamic Function(
+          dynamic,
+          int,
+        );
+
+        test('with string', () {
+          expect(convertBasicType('a', 5), 'a');
+        });
+
+        test('with int', () {
+          expect(convertBasicType(1, 5), 1);
+        });
+
+        test('with double', () {
+          expect(convertBasicType(1.0, 5), 1.0);
+          expect(convertBasicType(1.00000000001, 5), 1);
+        });
+
+        test('with unsupported type', () {
+          late String message;
+          try {
+            convertBasicType(Exception(), 5);
+          } catch (e) {
+            message = e.toString();
+          }
+
+          expect(message, 'Exception: Unsupported type: _Exception');
+        });
+      });
     });
 
     group('applyToString()', () {
@@ -688,7 +722,7 @@ void main() {
               late final String message;
 
               try {
-                JsonHash.validate({});
+                jh.validate({});
               } catch (e) {
                 message = e.toString();
               }
@@ -703,7 +737,7 @@ void main() {
               late final String message;
 
               try {
-                JsonHash.validate({
+                jh.validate({
                   '_hash': 'wrongHash',
                 });
               } catch (e) {
@@ -720,7 +754,7 @@ void main() {
 
           group('does not throw', () {
             test('when hash is correct', () {
-              JsonHash.validate({
+              jh.validate({
                 '_hash': 'RBNvo1WzZ4oRRq0W9-hknp',
               });
             });
@@ -733,7 +767,7 @@ void main() {
               late final String message;
 
               try {
-                JsonHash.validate({'key': 'value'});
+                jh.validate({'key': 'value'});
               } catch (e) {
                 message = e.toString();
               }
@@ -748,7 +782,7 @@ void main() {
               late final String message;
 
               try {
-                JsonHash.validate({
+                jh.validate({
                   'key': 'value',
                   '_hash': 'wrongHash',
                 });
@@ -766,7 +800,7 @@ void main() {
 
           group('does not throw', () {
             test('when hash is correct', () {
-              JsonHash.validate({
+              jh.validate({
                 'key': 'value',
                 '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
               });
@@ -799,7 +833,7 @@ void main() {
                 json.remove('_hash');
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -815,7 +849,7 @@ void main() {
                 json['parent']!.remove('_hash');
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -831,7 +865,7 @@ void main() {
                 json['parent']!['child'].remove('_hash');
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -849,7 +883,7 @@ void main() {
                 json['_hash'] = 'wrongHash';
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -866,7 +900,7 @@ void main() {
                 json['parent']!['_hash'] = 'wrongHash';
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -883,7 +917,7 @@ void main() {
                 json['parent']!['child']!['_hash'] = 'wrongHash';
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -898,7 +932,7 @@ void main() {
 
             group('not', () {
               test('when hash is correct', () {
-                JsonHash.validate(json);
+                jh.validate(json);
               });
             });
           });
@@ -930,7 +964,7 @@ void main() {
                 json['parent']![0].remove('_hash');
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -946,7 +980,7 @@ void main() {
                 json['parent']![0]['child'][0].remove('_hash');
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -964,7 +998,7 @@ void main() {
                 json['parent']![0]['_hash'] = 'wrongHash';
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -981,7 +1015,7 @@ void main() {
                 json['parent']![0]['child']![0]['_hash'] = 'wrongHash';
 
                 try {
-                  JsonHash.validate(json);
+                  jh.validate(json);
                 } catch (e) {
                   message = e.toString();
                 }
@@ -996,7 +1030,7 @@ void main() {
 
             group('not', () {
               test('when hash is correct', () {
-                JsonHash.validate(json);
+                jh.validate(json);
               });
             });
           });
