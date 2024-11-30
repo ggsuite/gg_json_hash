@@ -119,13 +119,13 @@ class HashConfig {
 /// Adds hashes to JSON object.
 class JsonHash {
   /// Constructor
-  JsonHash({this.config = HashConfig.defaultConfig});
+  const JsonHash({this.config = HashConfig.defaultConfig});
 
   /// Configuration for hashing.
   final HashConfig config;
 
   /// Default instance.
-  static final JsonHash defaultInstance = JsonHash();
+  static const JsonHash defaultInstance = JsonHash();
 
   // ...........................................................................
   /// Writes hashes into the JSON object.

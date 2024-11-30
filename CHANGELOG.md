@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.5] - 2024-11-30
+
+### Changed
+
+- Make JsonHash const
+
 ## [2.0.4] - 2024-11-30
 
 ### Changed
@@ -76,6 +82,7 @@
 
 - Increase version
 
+[2.0.5]: https://github.com/inlavigo/gg_json_hash/compare/2.0.4...2.0.5
 [2.0.4]: https://github.com/inlavigo/gg_json_hash/compare/2.0.3...2.0.4
 [2.0.3]: https://github.com/inlavigo/gg_json_hash/compare/2.0.1...2.0.3
 [2.0.1]: https://github.com/inlavigo/gg_json_hash/compare/2.0.0...2.0.1
