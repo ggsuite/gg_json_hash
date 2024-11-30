@@ -4,325 +4,33 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import 'dart:convert';
-
-import 'package:gg_json_hash/src/gg_json_hash.dart';
+import 'package:gg_json_hash/gg_json_hash.dart';
 import 'package:test/test.dart';
-import 'example_json.dart';
 
 void main() {
-  const jh = JsonHash();
-  final calcHash = jh.calcHash;
-
   group('JsonHash', () {
-    group('with a simple json', () {
-      group('containing only one key value pair', () {
-        test('with a string value', () {
-          final json = addHashes(const {'key': 'value'});
-          expect(json['key'], 'value');
-          final expectedHash = calcHash('{"key":"value"}');
-          expect(json['_hash'], expectedHash);
-          expect(json['_hash'], '5Dq88zdSRIOcAS-WM_lYYt');
-        });
+    late JsonHash jh;
 
-        test('with a int value', () {
-          final json = addHashes(const {'key': 1});
-          expect(json['key'], 1);
-          final expectedHash = calcHash('{"key":1}');
-          expect(json['_hash'], expectedHash);
-          expect(json['_hash'], 't4HVsGBJblqznOBwy6IeLt');
-        });
-
-        test('with a double value without commas', () {
-          final json = addHashes(const {'key': 1.000});
-          expect(json['key'], 1);
-          final expectedHash = calcHash('{"key":1}');
-          expect(json['_hash'], expectedHash);
-          expect(json['_hash'], 't4HVsGBJblqznOBwy6IeLt');
-        });
-
-        test('with a bool value', () {
-          final json = addHashes(const {'key': true});
-          expect(json['key'], true);
-          final expectedHash = calcHash('{"key":true}');
-          expect(json['_hash'], expectedHash);
-          expect(json['_hash'], 'dNkCrIe79x2dPyf5fywwYO');
-        });
-
-        test('with a long double value', () {
-          final json = addHashes(const {'key': 1.0123456789012345});
-          final expectedHash = calcHash('{"key":1.0123456789}');
-          expect(json['_hash'], expectedHash);
-          expect(json['_hash'], 'Cj6IqsbT9fSKfeVVkytoqA');
-        });
-
-        test('with a short double value', () {
-          final json = addHashes(const {'key': 1.012000});
-          final expectedHash = calcHash('{"key":1.012}');
-          expect(json['_hash'], expectedHash);
-          expect(json['_hash'], 'ppGtYoP5iHFqst5bPeAGMf');
-        });
-      });
-
-      test('existing _hash should be overwritten', () {
-        final json = addHashes({
-          'key': 'value',
-          '_hash': 'oldHash',
-        });
-        expect(json['key'], 'value');
-        final expectedHash = calcHash('{"key":"value"}');
-        expect(json['_hash'], expectedHash);
-        expect(json['_hash'], '5Dq88zdSRIOcAS-WM_lYYt');
-      });
-
-      group('containing floating point numbers', () {
-        test(
-            'truncates the floating point numbers to "hashFloatingPrecision" '
-            '10 decimal places', () {
-          final hash0 = addHashes(
-            const {'key': 1.01234567890123456789},
-            floatingPointPrecision: 9,
-          )['_hash'];
-
-          final hash1 = addHashes(
-            const {'key': 1.01234567890123456389},
-            floatingPointPrecision: 9,
-          )['_hash'];
-          final expectedHash = calcHash('{"key":1.012345678}');
-
-          expect(hash0, hash1);
-          expect(hash0, expectedHash);
-          expect(hash0, 'KTqI1AvWb3gI6dYA5HPPMx');
-        });
-      });
-
-      group('containing three key value pairs', () {
-        const json0 = {
-          'a': 'value',
-          'b': 1.0,
-          'c': true,
-        };
-
-        const json1 = {
-          'b': 1.0,
-          'a': 'value',
-          'c': true,
-        };
-
-        late Map<String, dynamic> j0;
-        late Map<String, dynamic> j1;
-
-        setUpAll(() {
-          j0 = addHashes(json0);
-          j1 = addHashes(json1);
-        });
-
-        test('should create a string of key value pairs and hash it', () {
-          final expectedHash = calcHash(
-            '{"a":"value","b":1,"c":true}',
-          );
-
-          expect(j0['_hash'], expectedHash);
-          expect(j1['_hash'], expectedHash);
-        });
-
-        test('should sort work independent of key order', () {
-          expect(j0, j1);
-          expect(j0['_hash'], j1['_hash']);
-          expect(true.toString(), 'true');
-        });
-      });
+    setUp(() {
+      jh = JsonHash();
     });
 
-    group('with a nested json', () {
-      test('of level 1', () {
-        // Hash an parent object containing one child object
-        final parent = addHashes(const {
-          'key': 'value',
-          'child': {
-            'key': 'value',
-          },
-        });
-
-        // Check the hash of the child object
-        final child = parent['child'] as Map<String, dynamic>;
-        final childHash = calcHash('{"key":"value"}');
-        expect(child['_hash'], childHash);
-
-        // Check the hash of the top level object
-        final parentHash = calcHash(
-          '{"child":"$childHash","key":"value"}',
-        );
-
-        expect(parent['_hash'], parentHash);
-      });
-
-      test('of level 2', () {
-        // Hash an parent object containing one child object
-        final parent = addHashes(const {
-          'key': 'value',
-          'child': {
-            'key': 'value',
-            'grandChild': {
-              'key': 'value',
-            },
-          },
-        });
-
-        // Check the hash of the grandChild object
-        final grandChild =
-            parent['child']!['grandChild'] as Map<String, dynamic>;
-        final grandChildHash = calcHash(
-          '{"key":"value"}',
-        );
-        expect(grandChild['_hash'], grandChildHash);
-
-        // Check the hash of the child object
-        final child = parent['child'] as Map<String, dynamic>;
-        final childHash = calcHash(
-          '{"grandChild":"$grandChildHash","key":"value"}',
-        );
-        expect(child['_hash'], childHash);
-
-        // Check the hash of the top level object
-        final parentHash = calcHash(
-          '{"child":"$childHash","key":"value"}',
-        );
-        expect(parent['_hash'], parentHash);
-      });
-    });
-
-    test('with complete json example', () {
-      final json = jsonDecode(exampleJson) as Map<String, dynamic>;
-      final hashedJson = addHashes(json);
-
-      JsonEncoder encoder = const JsonEncoder.withIndent('  ');
-      final hashedJsonString = encoder.convert(hashedJson);
-      // print(hashedJsonString);
-      // return;
-      expect(hashedJsonString, exampleJsonWithHashes);
-    });
-
-    group('with an array', () {
-      group('on top level', () {
-        group('containing only simple types', () {
-          test('should convert all values to strings and hash it', () {
-            final json = addHashes({
-              'key': ['value', 1.0, true],
-            });
-
-            final expectedHash = calcHash(
-              '{"key":["value",1,true]}',
-            );
-
-            expect(json['_hash'], expectedHash);
-            expect(json['_hash'], 'nbNb1YfpgqnPfyFTyCQ5YF');
-          });
-        });
-
-        group('containing nested objects', () {
-          group('should hash the nested objects', () {
-            group('and use the hash instead of the stringified value', () {
-              test('with a complicated array', () {
-                final json = addHashes({
-                  'array': [
-                    'key',
-                    1.0,
-                    true,
-                    {'key1': 'value1'},
-                    {'key0': 'value0'},
-                  ],
-                });
-
-                final h0 = calcHash('{"key0":"value0"}');
-                final h1 = calcHash('{"key1":"value1"}');
-                final expectedHash = calcHash(
-                  // '{"array":["key",1,true,"$h0","$h1"]}',
-                  '{"array":["key",1,true,"$h1","$h0"]}',
-                );
-
-                expect(json['_hash'], expectedHash);
-                expect(json['_hash'], '13h_Z0wZCF4SQsTyMyq5dV');
-              });
-
-              test('with a simple array', () {
-                final json = addHashes({
-                  'array': [
-                    {'key': 'value'},
-                  ],
-                });
-
-                // Did hash the array item?
-                final itemHash = calcHash(
-                  '{"key":"value"}',
-                );
-                final array = json['array'] as List<dynamic>;
-                final item0 = array[0] as Map<String, dynamic>;
-                expect(item0['_hash'], itemHash);
-                expect(
-                  itemHash,
-                  '5Dq88zdSRIOcAS-WM_lYYt',
-                );
-
-                // Did use the array item hash for the array hash?
-
-                final expectedHash = calcHash(
-                  '{"array":["$itemHash"]}',
-                );
-
-                expect(json['_hash'], expectedHash);
-                expect(json['_hash'], 'zYcZBAUGLgR0ygMxi0V5ZT');
-              });
-            });
-          });
-        });
-
-        group('containing nested arrays', () {
-          test('should hash the nested arrays', () {
-            final json = addHashes({
-              'array': [
-                ['key', 1.0, true],
-                'hello',
-              ],
-            });
-
-            final jsonHash = calcHash(
-              '{"array":[["key",1,true],"hello"]}',
-            );
-
-            expect(json['_hash'], jsonHash);
-            expect(json['_hash'], '1X_6COC1sP5ECuHvKtVoDT');
-          });
-        });
-      });
-    });
-
-    group('throws', () {
-      test('when data contains an unsupported type', () {
-        late String message;
-
-        try {
-          addHashes({
-            'key': Exception(),
-          });
-        } catch (e) {
-          message = e.toString();
-        }
-
-        expect(
-          message,
-          'Exception: Unsupported type: _Exception',
-        );
+    group('applyToJsonString(String)', () {
+      test(
+          'parses the string, adds the hashes, '
+          'and returns the serialized string', () {
+        const json = '{"key": "value"}';
+        final jsonString = jh.applyToJsonString(json);
+        expect(jsonString, '{"key":"value","_hash":"5Dq88zdSRIOcAS-WM_lYYt"}');
       });
     });
 
     group('private methods', () {
       group('_copyJson', () {
-        final copyJson = JsonHash.privateMethods['_copyJson']
-            as Map<String, dynamic> Function(Map<String, dynamic>);
+        const copyJson = JsonHash.testCopyJson;
 
         test('empty json', () {
-          expect(copyJson(<String, dynamic>{}), <String, dynamic>{});
+          expect(copyJson({}), <String, dynamic>{});
         });
 
         test('simple value', () {
@@ -331,102 +39,83 @@ void main() {
 
         test('nested value', () {
           expect(
-            copyJson(
+              copyJson({
+                'a': {'b': 1},
+              }),
               {
                 'a': {'b': 1},
-              },
-            ),
-            {
-              'a': {'b': 1},
-            },
-          );
+              });
         });
 
         test('list value', () {
           expect(
-            copyJson(
+              copyJson({
+                'a': [1, 2],
+              }),
               {
                 'a': [1, 2],
-              },
-            ),
-            {
-              'a': [1, 2],
-            },
-          );
+              });
         });
 
         test('list with list', () {
           expect(
-            copyJson(
+              copyJson({
+                'a': [
+                  [1, 2],
+                ],
+              }),
               {
                 'a': [
                   [1, 2],
                 ],
-              },
-            ),
-            {
-              'a': [
-                [1, 2],
-              ],
-            },
-          );
+              });
         });
 
         test('list with map', () {
           expect(
-            copyJson(
+              copyJson({
+                'a': [
+                  {'b': 1},
+                ],
+              }),
               {
                 'a': [
                   {'b': 1},
                 ],
-              },
-            ),
-            {
-              'a': [
-                {'b': 1},
-              ],
-            },
-          );
+              });
         });
 
         group('throws', () {
           group('on unsupported type', () {
             test('in map', () {
-              late String message;
+              String? message;
               try {
-                copyJson(
-                  {
-                    'a': Exception(),
-                  },
-                );
+                copyJson({'a': Error()});
               } catch (e) {
                 message = e.toString();
               }
 
-              expect(message, 'Exception: Unsupported type: _Exception');
+              expect(message, 'Exception: Unsupported type: Error');
             });
 
             test('in list', () {
-              late String message;
+              String? message;
               try {
-                copyJson(
-                  {
-                    'a': [Exception()],
-                  },
-                );
+                copyJson({
+                  'a': [Error()],
+                });
               } catch (e) {
                 message = e.toString();
               }
 
-              expect(message, 'Exception: Unsupported type: _Exception');
+              expect(message, 'Exception: Unsupported type: Error');
             });
           });
         });
       });
 
       group('_isBasicType', () {
-        final isBasicType =
-            JsonHash.privateMethods['_isBasicType'] as bool Function(dynamic);
+        const isBasicType = JsonHash.testIsBasicType;
 
         test('returns true if type is a basic type', () {
           expect(isBasicType(1), true);
@@ -434,50 +123,18 @@ void main() {
           expect(isBasicType('1'), true);
           expect(isBasicType(true), true);
           expect(isBasicType(false), true);
-          expect(isBasicType(<String>{}), false);
+          expect(isBasicType(<dynamic>{}), false);
         });
       });
 
-      group('_truncate(double, precision)', () {
-        final truncate =
-            JsonHash.privateMethods['_truncate'] as num Function(double, int);
-
-        test('truncates commas but only if precision exceeds precision', () {
-          expect(truncate(1.0, 5), 1);
-          expect(truncate(1, 5), 1);
-
-          expect(truncate(1.23456789, 2), 1.23);
-          expect(truncate(1.23456789, 3), 1.234);
-          expect(truncate(1.23456789, 4), 1.2345);
-          expect(truncate(1.23456789, 5), 1.23456);
-          expect(truncate(1.23456789, 6), 1.234567);
-          expect(truncate(1.23456789, 7), 1.2345678);
-          expect(truncate(1.23456789, 8), 1.23456789);
-          expect(truncate(1.12, 1), 1.1);
-          expect(truncate(1.12, 2), 1.12);
-          expect(truncate(1.12, 3), 1.12);
-          expect(truncate(1.12, 4), 1.12);
-        });
-
-        test('does not add additional commas', () {
-          expect(truncate(1.0, 0), 1);
-          expect(truncate(1.0, 1), 1.0);
-          expect(truncate(1.0, 2), 1.0);
-          expect(truncate(1.0, 3), 1.0);
-        });
-      });
-
-      group('_jsonString(map)', () {
-        final jsonString = JsonHash.privateMethods['_jsonString'] as String
-            Function(Map<String, dynamic>);
-
+      group('_jsonString(Map)', () {
         test('converts a map into a json string', () {
+          final jsonString = jh.testJsonString;
           expect(jsonString({'a': 1}), '{"a":1}');
           expect(jsonString({'a': 'b'}), '{"a":"b"}');
           expect(jsonString({'a': true}), '{"a":true}');
           expect(jsonString({'a': false}), '{"a":false}');
-          expect(jsonString({'a': 1.0}), '{"a":1.0}');
-          expect(jsonString({'a': 1.0}), '{"a":1.0}');
+          expect(jsonString({'a': 1.0}), '{"a":1}');
           expect(
             jsonString({
               'a': [1, 2],
@@ -493,549 +150,483 @@ void main() {
         });
 
         test('throws when unsupported type', () {
-          late String message;
+          final jsonString = jh.testJsonString;
+          String? message;
           try {
-            jsonString({'a': Exception()});
+            jsonString({'a': Error()});
           } catch (e) {
             message = e.toString();
           }
 
-          expect(message, 'Exception: Unsupported type: _Exception');
+          expect(message, 'Exception: Unsupported type: Error');
         });
       });
 
-      group('_convertBasicType', () {
-        final convertBasicType =
-            JsonHash.privateMethods['_convertBasicType'] as dynamic Function(
-          dynamic,
-          int,
-        );
-
-        test('with string', () {
-          expect(convertBasicType('a', 5), 'a');
+      group('_convertBasicType(String)', () {
+        test('with a string', () {
+          expect(jh.testConvertBasicType('hello'), 'hello');
         });
 
-        test('with int', () {
-          expect(convertBasicType(1, 5), 1);
+        test('with an int', () {
+          expect(jh.testConvertBasicType(10), 10);
         });
 
-        test('with double', () {
-          expect(convertBasicType(1.0, 5), 1.0);
-          expect(convertBasicType(1.00000000001, 5), 1);
+        test('with a double', () {
+          expect(jh.testConvertBasicType(true), true);
         });
 
-        test('with unsupported type', () {
-          late String message;
+        test('with a non-basic type', () {
+          String message = '';
           try {
-            convertBasicType(Exception(), 5);
+            jh.testConvertBasicType(<dynamic>{});
           } catch (e) {
             message = e.toString();
           }
 
-          expect(message, 'Exception: Unsupported type: _Exception');
+          expect(message, 'Exception: Unsupported type: _Set<dynamic>');
         });
       });
     });
 
-    group('applyToString()', () {
-      test('should add the hash to the json string', () {
-        const json = '{"key": "value"}';
-        final jsonString = const JsonHash().applyToString(json);
-        expect(jsonString, '{"key":"value","_hash":"5Dq88zdSRIOcAS-WM_lYYt"}');
-      });
-    });
+    group('validate', () {
+      group('with an empty json', () {
+        group('throws', () {
+          test('when no hash is given', () {
+            String? message;
 
-    group('with updateExistingHashes', () {
-      late Map<String, dynamic> json;
+            try {
+              jh.validate({});
+            } catch (e) {
+              message = e.toString();
+            }
 
-      setUp(() {
-        json = {
-          'a': {
-            '_hash': 'hash_a',
-            'b': {
-              '_hash': 'hash_b',
-              'c': {
-                '_hash': 'hash_c',
-                'd': 'value',
-              },
-            },
-          },
-        };
-      });
-
-      bool allHashesChanged() {
-        return json['a']!['_hash'] != 'hash_a' &&
-            json['a']!['b']!['_hash'] != 'hash_b' &&
-            json['a']!['b']!['c']!['_hash'] != 'hash_c';
-      }
-
-      bool noHashesChanged() {
-        return json['a']!['_hash'] == 'hash_a' &&
-            json['a']!['b']!['_hash'] == 'hash_b' &&
-            json['a']!['b']!['c']!['_hash'] == 'hash_c';
-      }
-
-      List<String> changedHashes() {
-        final result = <String>[];
-        if (json['a']!['_hash'] != 'hash_a') {
-          result.add('a');
-        }
-
-        if (json['a']!['b']!['_hash'] != 'hash_b') {
-          result.add('b');
-        }
-
-        if (json['a']!['b']!['c']!['_hash'] != 'hash_c') {
-          result.add('c');
-        }
-
-        return result;
-      }
-
-      group('true', () {
-        test('should recalculate existing hashes', () {
-          addHashes(json, updateExistingHashes: true, inPlace: true);
-          expect(allHashesChanged(), isTrue);
-        });
-      });
-
-      group('false', () {
-        group('should not recalculate existing hashes', () {
-          test('with all objects having hashes', () {
-            addHashes(json, updateExistingHashes: false, inPlace: true);
-            expect(noHashesChanged(), isTrue);
+            expect(message, 'Exception: Hash is missing.');
           });
 
-          test('with parents have no hashes', () {
-            json['a']!.remove('_hash');
-            addHashes(json, updateExistingHashes: false, inPlace: true);
-            expect(changedHashes(), ['a']);
+          test('when hash is wrong', () {
+            String? message;
 
-            json['a']!.remove('_hash');
-            json['a']['b']!.remove('_hash');
-            addHashes(json, updateExistingHashes: false, inPlace: true);
-            expect(changedHashes(), ['a', 'b']);
-          });
-        });
-      });
-    });
+            try {
+              jh.validate({'_hash': 'wrongHash'});
+            } catch (e) {
+              message = e.toString();
+            }
 
-    group('with inPlace', () {
-      group('false', () {
-        test('does not touch the original object', () {
-          final json = {
-            'key': 'value',
-          };
-
-          final hashedJson = addHashes(json, inPlace: false);
-          expect(
-            hashedJson,
-            {
-              'key': 'value',
-              '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
-            },
-          );
-
-          expect(
-            json,
-            {
-              'key': 'value',
-            },
-          );
-        });
-      });
-
-      group('true', () {
-        test('writes hashes into original json', () {
-          final json = {
-            'key': 'value',
-          };
-
-          final hashedJson = addHashes(json, inPlace: true);
-          expect(
-            hashedJson,
-            {
-              'key': 'value',
-              '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
-            },
-          );
-
-          expect(
-            json,
-            same(hashedJson),
-          );
-        });
-      });
-    });
-
-    group('with recursive', () {
-      const json = {
-        'a': {
-          '_hash': 'hash_a',
-          'b': {
-            '_hash': 'hash_b',
-          },
-        },
-        'b': {
-          '_hash': 'hash_a',
-          'b': {
-            '_hash': 'hash_b',
-          },
-        },
-        '_hash': 'hash_0',
-      };
-
-      group('true', () {
-        test('should recalculate deeply all hashes', () {
-          final result = addHashes(
-            json,
-            recursive: true,
-          );
-
-          // Root as well as child hashes have changed
-          expect(result['_hash'], isNot('hash_0'));
-          expect(result['a']!['_hash'], isNot('hash_a'));
-          expect(result['a']!['b']!['_hash'], isNot('hash_b'));
-        });
-      });
-
-      group('false', () {
-        test('should only calc the first hash', () {
-          final result = addHashes(
-            json,
-            recursive: false,
-          );
-
-          // Root hash has changed
-          expect(result['_hash'], isNot('hash_0'));
-
-          // Child hashes have not changed
-          expect(result['a']!['_hash'], 'hash_a');
-          expect(result['a']!['b']!['_hash'], 'hash_b');
-        });
-      });
-
-      group('validate', () {
-        group('with an empty json', () {
-          group('throws', () {
-            test('when no hash is given', () {
-              late final String message;
-
-              try {
-                jh.validate({});
-              } catch (e) {
-                message = e.toString();
-              }
-
-              expect(
-                message,
-                'Exception: Hash is missing.',
-              );
-            });
-
-            test('when hash is wrong', () {
-              late final String message;
-
-              try {
-                jh.validate({
-                  '_hash': 'wrongHash',
-                });
-              } catch (e) {
-                message = e.toString();
-              }
-
-              expect(
-                message,
-                'Exception: Hash "wrongHash" is wrong. '
-                'Should be "RBNvo1WzZ4oRRq0W9-hknp".',
-              );
-            });
-          });
-
-          group('does not throw', () {
-            test('when hash is correct', () {
-              jh.validate({
-                '_hash': 'RBNvo1WzZ4oRRq0W9-hknp',
-              });
-            });
+            expect(
+              message,
+              'Exception: Hash "wrongHash" is wrong. Should be "RBNvo1WzZ4oRRq0W9-hknp".',
+            );
           });
         });
 
-        group('with an single level json', () {
-          group('throws', () {
-            test('when no hash is given', () {
-              late final String message;
+        group('does not throw', () {
+          test('when hash is correct', () {
+            expect(
+              () => jh.validate({'_hash': 'RBNvo1WzZ4oRRq0W9-hknp'}),
+              isNot(throwsA(anything)),
+            );
+          });
+        });
+      });
 
-              try {
-                jh.validate({'key': 'value'});
-              } catch (e) {
-                message = e.toString();
-              }
+      group('with a single level json', () {
+        group('throws', () {
+          test('when no hash is given', () {
+            String? message;
 
-              expect(
-                message,
-                'Exception: Hash is missing.',
-              );
-            });
+            try {
+              jh.validate({'key': 'value'});
+            } catch (e) {
+              message = e.toString();
+            }
 
-            test('when hash is wrong', () {
-              late final String message;
-
-              try {
-                jh.validate({
-                  'key': 'value',
-                  '_hash': 'wrongHash',
-                });
-              } catch (e) {
-                message = e.toString();
-              }
-
-              expect(
-                message,
-                'Exception: Hash "wrongHash" is wrong. '
-                'Should be "5Dq88zdSRIOcAS-WM_lYYt".',
-              );
-            });
+            expect(message, 'Exception: Hash is missing.');
           });
 
-          group('does not throw', () {
-            test('when hash is correct', () {
-              jh.validate({
+          test('when hash is wrong', () {
+            String? message;
+
+            try {
+              jh.validate({'key': 'value', '_hash': 'wrongHash'});
+            } catch (e) {
+              message = e.toString();
+            }
+
+            expect(
+              message,
+              'Exception: Hash "wrongHash" is wrong. Should be "5Dq88zdSRIOcAS-WM_lYYt".',
+            );
+          });
+        });
+
+        group('does not throw', () {
+          test('when hash is correct', () {
+            expect(
+              () => jh.validate(
+                {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
+              ),
+              isNot(throwsA(anything)),
+            );
+          });
+        });
+      });
+
+      group('with a deeply nested json', () {
+        late Map<String, dynamic> json2;
+
+        setUp(() {
+          json2 = {
+            '_hash': 'oEE88mHZ241BRlAfyG8n9X',
+            'parent': {
+              '_hash': '3Wizz29YgTIc1LRaN9fNfK',
+              'child': {
                 'key': 'value',
                 '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
-              });
-            });
-          });
-        });
-
-        group('with an deeply nested json', () {
-          late Map<String, dynamic> json;
-
-          setUp(
-            () {
-              json = <String, dynamic>{
-                '_hash': 'oEE88mHZ241BRlAfyG8n9X',
-                'parent': {
-                  '_hash': '3Wizz29YgTIc1LRaN9fNfK',
-                  'child': {
-                    'key': 'value',
-                    '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
-                  },
-                },
-              };
+              },
             },
-          );
+          };
+        });
 
-          group('throws', () {
-            group('when no hash is given', () {
-              test('at the root', () {
-                late final String message;
-                json.remove('_hash');
+        group('throws', () {
+          group('when no hash is given', () {
+            test('at the root', () {
+              String? message;
+              json2.remove('_hash');
 
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
 
-                expect(
-                  message,
-                  'Exception: Hash is missing.',
-                );
-              });
-
-              test('at the parent', () {
-                late final String message;
-                json['parent']!.remove('_hash');
-
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
-
-                expect(
-                  message,
-                  'Exception: Hash at /parent is missing.',
-                );
-              });
-
-              test('at the child', () {
-                late final String message;
-                json['parent']!['child'].remove('_hash');
-
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
-
-                expect(
-                  message,
-                  'Exception: Hash at /parent/child is missing.',
-                );
-              });
+              expect(message, 'Exception: Hash is missing.');
             });
 
-            group('when hash is wrong', () {
-              test('at the root', () {
-                late final String message;
-                json['_hash'] = 'wrongHash';
+            test('at the parent', () {
+              String? message;
+              json2['parent'].remove('_hash');
 
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
 
-                expect(
-                  message,
-                  'Exception: Hash "wrongHash" is wrong. '
-                  'Should be "oEE88mHZ241BRlAfyG8n9X".',
-                );
-              });
-
-              test('at the parent', () {
-                late final String message;
-                json['parent']!['_hash'] = 'wrongHash';
-
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
-
-                expect(
-                  message,
-                  'Exception: Hash at /parent "wrongHash" is wrong. '
-                  'Should be "3Wizz29YgTIc1LRaN9fNfK".',
-                );
-              });
-
-              test('at the child', () {
-                late final String message;
-                json['parent']!['child']!['_hash'] = 'wrongHash';
-
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
-
-                expect(
-                  message,
-                  'Exception: Hash at /parent/child "wrongHash" is wrong. '
-                  'Should be "5Dq88zdSRIOcAS-WM_lYYt".',
-                );
-              });
+              expect(message, 'Exception: Hash at /parent is missing.');
             });
 
-            group('not', () {
-              test('when hash is correct', () {
-                jh.validate(json);
-              });
+            test('at the child', () {
+              String? message;
+              json2['parent']['child'].remove('_hash');
+
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(message, 'Exception: Hash at /parent/child is missing.');
+            });
+          });
+
+          group('when hash is wrong', () {
+            test('at the root', () {
+              String? message;
+              json2['_hash'] = 'wrongHash';
+
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                'Exception: Hash "wrongHash" is wrong. Should be "oEE88mHZ241BRlAfyG8n9X".',
+              );
+            });
+
+            test('at the parent', () {
+              String? message;
+              json2['parent']['_hash'] = 'wrongHash';
+
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                'Exception: Hash at /parent "wrongHash" is wrong. Should be "3Wizz29YgTIc1LRaN9fNfK".',
+              );
+            });
+
+            test('at the child', () {
+              String? message;
+              json2['parent']['child']['_hash'] = 'wrongHash';
+
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                'Exception: Hash at /parent/child "wrongHash" is wrong. Should be "5Dq88zdSRIOcAS-WM_lYYt".',
+              );
+            });
+          });
+
+          group('not', () {
+            test('when hash is correct', () {
+              expect(() => jh.validate(json2), isNot(throwsA(anything)));
             });
           });
         });
+      });
 
-        group('with an deeply nested json with child array', () {
-          late Map<String, dynamic> json;
+      group('with a deeply nested json with child array', () {
+        late Map<String, dynamic> json2;
 
-          setUp(
-            () {
-              json = <String, dynamic>{
-                '_hash': 'IoJ_C8gm8uVu8ExpS7ZNPY',
-                'parent': [
-                  {
-                    '_hash': 'kDsVfUjnkXU7_KXqp-PuyA',
-                    'child': [
-                      {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
-                    ],
-                  }
+        setUp(() {
+          json2 = {
+            '_hash': 'IoJ_C8gm8uVu8ExpS7ZNPY',
+            'parent': [
+              {
+                '_hash': 'kDsVfUjnkXU7_KXqp-PuyA',
+                'child': [
+                  {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
                 ],
-              };
-            },
-          );
+              },
+            ],
+          };
+        });
 
-          group('throws', () {
-            group('when no hash is given', () {
-              test('at the parent', () {
-                late final String message;
-                json['parent']![0].remove('_hash');
+        group('throws', () {
+          group('when no hash is given', () {
+            test('at the parent', () {
+              String? message;
+              json2['parent'][0].remove('_hash');
 
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
 
-                expect(
-                  message,
-                  'Exception: Hash at /parent/0 is missing.',
-                );
-              });
-
-              test('at the child', () {
-                late final String message;
-                json['parent']![0]['child'][0].remove('_hash');
-
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
-
-                expect(
-                  message,
-                  'Exception: Hash at /parent/0/child/0 is missing.',
-                );
-              });
+              expect(message, 'Exception: Hash at /parent/0 is missing.');
             });
 
-            group('when hash is wrong', () {
-              test('at the parent', () {
-                late final String message;
-                json['parent']![0]['_hash'] = 'wrongHash';
+            test('at the child', () {
+              String? message;
+              json2['parent'][0]['child'][0].remove('_hash');
 
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
 
-                expect(
-                  message,
-                  'Exception: Hash at /parent/0 "wrongHash" is wrong. '
-                  'Should be "kDsVfUjnkXU7_KXqp-PuyA".',
-                );
-              });
+              expect(
+                message,
+                'Exception: Hash at /parent/0/child/0 is missing.',
+              );
+            });
+          });
 
-              test('at the child', () {
-                late final String message;
-                json['parent']![0]['child']![0]['_hash'] = 'wrongHash';
+          group('when hash is wrong', () {
+            test('at the parent', () {
+              String? message;
+              json2['parent'][0]['_hash'] = 'wrongHash';
 
-                try {
-                  jh.validate(json);
-                } catch (e) {
-                  message = e.toString();
-                }
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
 
-                expect(
-                  message,
-                  'Exception: Hash at /parent/0/child/0 "wrongHash" is wrong. '
-                  'Should be "5Dq88zdSRIOcAS-WM_lYYt".',
-                );
-              });
+              expect(
+                message,
+                'Exception: Hash at /parent/0 "wrongHash" is wrong. Should be "kDsVfUjnkXU7_KXqp-PuyA".',
+              );
             });
 
-            group('not', () {
-              test('when hash is correct', () {
-                jh.validate(json);
-              });
+            test('at the child', () {
+              String? message;
+              json2['parent'][0]['child'][0]['_hash'] = 'wrongHash';
+
+              try {
+                jh.validate(json2);
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                'Exception: Hash at /parent/0/child/0 "wrongHash" is wrong. Should be "5Dq88zdSRIOcAS-WM_lYYt".',
+              );
+            });
+          });
+
+          group('not', () {
+            test('when hash is correct', () {
+              expect(() => jh.validate(json2), isNot(throwsA(anything)));
             });
           });
         });
       });
     });
   });
+
+  const exampleJson = '''{
+    "layerA": {
+      "data": [
+        {
+          "w": 600,
+          "w1": 100
+        },
+        {
+          "w": 700,
+          "w1": 100
+        }
+      ]
+    },
+    "layerB": {
+      "data": [
+        {
+          "d": 268,
+          "d1": 100
+        }
+      ]
+    },
+    "layerC": {
+      "data": [
+        {
+          "h": 800
+        }
+      ]
+    },
+    "layerD": {
+      "data": [
+        {
+          "wMin": 0,
+          "wMax": 900,
+          "w1Min": 0,
+          "w1Max": 900
+        }
+      ]
+    },
+    "layerE": {
+      "data": [
+        {
+          "type": "XYZABC",
+          "widths": "sLZpHAffgchgJnA++HqKtO",
+          "depths": "k1IL2ctZHw4NpaA34w0d0I",
+          "heights": "GBLHz0ayRkVUlms1wHDaJq",
+          "ranges": "9rohAG49drWZs9tew4rDef"
+        }
+      ]
+    },
+    "layerF": {
+      "data": [
+        {
+          "type": "XYZABC",
+          "name": "Unterschrank 60cm"
+        }
+      ]
+    },
+    "layerG": {
+      "data": [
+        {
+          "type": "XYZABC",
+          "name": "Base Cabinet 23.5"
+        }
+      ]
+    }
+  }''';
+
+  const exampleJsonWithHashes = '''{
+    "layerA": {
+      "data": [
+        {
+          "w": 600,
+          "w1": 100,
+          "_hash": "ajRQhCx6QLPI8227B72r8I"
+        },
+        {
+          "w": 700,
+          "w1": 100,
+          "_hash": "Jf177UAntzI4rIjKiU_MVt"
+        }
+      ],
+      "_hash": "qCgcNNF3wJPfx0rkRDfoSY"
+    },
+    "layerB": {
+      "data": [
+        {
+          "d": 268,
+          "d1": 100,
+          "_hash": "9mJ7aZJexhfz8IfwF6bsuW"
+        }
+      ],
+      "_hash": "tb0ffNF2ePpqsRxmvMDRrt"
+    },
+    "layerC": {
+      "data": [
+        {
+          "h": 800,
+          "_hash": "KvMHhk1dYYQ2o5Srt6pTUN"
+        }
+      ],
+      "_hash": "Z4km_FzQoxyck-YHQDZMtV"
+    },
+    "layerD": {
+      "data": [
+        {
+          "wMin": 0,
+          "wMax": 900,
+          "w1Min": 0,
+          "w1Max": 900,
+          "_hash": "6uw0BSIllrk6DuKyvQh-Rg"
+        }
+      ],
+      "_hash": "qFDAzWUsTnqICnpc_rJtax"
+    },
+    "layerE": {
+      "data": [
+        {
+          "type": "XYZABC",
+          "widths": "sLZpHAffgchgJnA++HqKtO",
+          "depths": "k1IL2ctZHw4NpaA34w0d0I",
+          "heights": "GBLHz0ayRkVUlms1wHDaJq",
+          "ranges": "9rohAG49drWZs9tew4rDef",
+          "_hash": "65LigWuYVGgifKnEZaOJET"
+        }
+      ],
+      "_hash": "pDRglh2oWJcghTzzrzTLw6"
+    },
+    "layerF": {
+      "data": [
+        {
+          "type": "XYZABC",
+          "name": "Unterschrank 60cm",
+          "_hash": "gjzETUIUf563ZJNHVEY9Wt"
+        }
+      ],
+      "_hash": "r1u6gR8WLzPAZ3lEsAqREP"
+    },
+    "layerG": {
+      "data": [
+        {
+          "type": "XYZABC",
+          "name": "Base Cabinet 23.5",
+          "_hash": "DEyuShUHDpWSJ7Rq_a3uz6"
+        }
+      ],
+      "_hash": "3meyGs7XhOh8gWFNQFYZDI"
+    },
+    "_hash": "OmmdaqCAhcIKnDm7lT-_gI"
+  }''';
 }

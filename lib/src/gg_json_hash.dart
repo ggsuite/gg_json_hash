@@ -4,81 +4,163 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-// ...........................................................................
-import 'dart:collection';
 import 'dart:convert';
-
 import 'package:crypto/crypto.dart';
 
-// #############################################################################
-/// Deeply hashes a JSON object.
-Map<String, dynamic> addHashes(
-  Map<String, dynamic> json, {
-  bool updateExistingHashes = true,
-  int floatingPointPrecision = 10,
-  int hashLength = 22,
-  bool inPlace = false,
-  bool recursive = true,
-}) {
-  return JsonHash(
-    hashLength: hashLength,
-    floatingPointPrecision: floatingPointPrecision,
-    updateExistingHashes: updateExistingHashes,
-    recursive: recursive,
-  ).applyTo(json, inPlace: inPlace);
-}
-
-// #############################################################################
-/// Adds hashes to JSON object
-class JsonHash {
+// .............................................................................
+/// Number config for hashing.
+///
+/// We need to make sure that the hashing of numbers is consistent
+/// across different platforms. Especially rounding errors can lead to
+/// different hashes although the numbers are considered equal. This
+/// class provides a configuration for hashing numbers.
+class NumberConfig {
   /// Constructor
-  const JsonHash({
-    this.hashLength = 22,
-    this.floatingPointPrecision = 10,
-    this.updateExistingHashes = true,
-    this.recursive = true,
+  const NumberConfig({
+    this.precision = 0.001,
+    this.maxNum = 1000 * 1000 * 1000,
+    this.minNum = -1000 * 1000 * 1000,
+    this.throwOnRangeError = true,
   });
 
-  /// Replace existing hashes
+  /// Precision for hashing numbers.
+  final double precision;
+
+  /// Maximum number for hashing.
+  final int maxNum;
+
+  /// Minimum number for hashing.
+  final int minNum;
+
+  /// Throw an error if a number is out of range.
+  final bool throwOnRangeError;
+
+  /// Default configuration.
+  static const NumberConfig defaultConfig = NumberConfig();
+
+  /// Creates a copy of the current NumberConfig with optional new values.
+  NumberConfig copyWith({
+    double? precision,
+    int? maxNum,
+    int? minNum,
+    bool? throwOnRangeError,
+  }) {
+    return NumberConfig(
+      precision: precision ?? this.precision,
+      maxNum: maxNum ?? this.maxNum,
+      minNum: minNum ?? this.minNum,
+      throwOnRangeError: throwOnRangeError ?? this.throwOnRangeError,
+    );
+  }
+}
+
+// .............................................................................
+/// When writing hashes into a given JSON object, we have various options.
+class ApplyConfig {
+  /// Constructor
+  const ApplyConfig({
+    this.inPlace = false,
+    this.updateExistingHashes = true,
+    this.throwIfOnWrongHashes = true,
+  });
+
+  /// Write the hashes in place.
+  final bool inPlace;
+
+  /// Update existing hashes.
   final bool updateExistingHashes;
 
-  /// The hash length in bytes
+  /// Throw an error if the hash is wrong.
+  final bool throwIfOnWrongHashes;
+
+  /// Default configuration.
+  static const ApplyConfig defaultConfig = ApplyConfig();
+
+  /// Creates a copy of the current ApplyConfig with optional new values.
+  ApplyConfig copyWith({
+    bool? inPlace,
+    bool? updateExistingHashes,
+    bool? throwIfOnWrongHashes,
+  }) {
+    return ApplyConfig(
+      inPlace: inPlace ?? this.inPlace,
+      updateExistingHashes: updateExistingHashes ?? this.updateExistingHashes,
+      throwIfOnWrongHashes: throwIfOnWrongHashes ?? this.throwIfOnWrongHashes,
+    );
+  }
+}
+
+// .............................................................................
+/// Options for the JSON hash.
+class HashConfig {
+  /// Constructor
+  const HashConfig({
+    this.hashLength = 22,
+    this.hashAlgorithm = 'SHA-256',
+    this.numberConfig = NumberConfig.defaultConfig,
+  });
+
+  /// Length of the hash.
   final int hashLength;
 
-  /// Round floating point numbers to this precision before hashing
-  final int floatingPointPrecision;
+  /// Algorithm for hashing.
+  final String hashAlgorithm;
 
-  /// Recursively iterates into child objects
-  final bool recursive;
+  /// Configuration for hashing numbers.
+  final NumberConfig numberConfig;
 
-  /// Writes hashes into the JSON object
-  Map<String, dynamic> applyTo(
+  /// Default configuration.
+  static const HashConfig defaultConfig = HashConfig();
+}
+
+// .............................................................................
+/// Adds hashes to JSON object.
+class JsonHash {
+  /// Constructor
+  JsonHash({this.config = HashConfig.defaultConfig});
+
+  /// Configuration for hashing.
+  final HashConfig config;
+
+  /// Default instance.
+  static final JsonHash defaultInstance = JsonHash();
+
+  // ...........................................................................
+  /// Writes hashes into the JSON object.
+  Map<String, dynamic> apply(
     Map<String, dynamic> json, {
-    bool inPlace = false,
+    ApplyConfig applyConfig = ApplyConfig.defaultConfig,
   }) {
-    final copy = inPlace ? json : _copyJson(json);
-    _addHashesToObject(copy, recursive);
+    final copy = applyConfig.inPlace ? json : _copyJson(json);
+    _addHashesToObject(copy, applyConfig);
     return copy;
   }
 
-  /// Writes hashes into a JSON string
-  String applyToString(String jsonString) {
+  // ...........................................................................
+  /// Writes hashes into a JSON string.
+  String applyToJsonString(String jsonString) {
     final json = jsonDecode(jsonString) as Map<String, dynamic>;
-    final hashedJson = applyTo(json, inPlace: true);
+    final applyConfig = ApplyConfig.defaultConfig.copyWith(inPlace: true);
+    final hashedJson = apply(json, applyConfig: applyConfig);
     return jsonEncode(hashedJson);
   }
 
-  /// Calculates a SHA-256 hash of a string with base64 url
-  String calcHash(String string) {
-    final digest = sha256.convert(utf8.encode(string));
-    return base64UrlEncode(digest.bytes).substring(0, hashLength);
+  // ...........................................................................
+  /// Calculates a SHA-256 hash of a string with base64 url.
+  String calcHash(String input) {
+    final bytes = sha256.convert(utf8.encode(input)).bytes;
+    final base64 = base64Encode(bytes).substring(0, config.hashLength);
+
+    // convert to url safe base64
+    return base64.replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
   }
 
   // ...........................................................................
-  /// Throws if hashes are not correct
+  /// Throws if hashes are not correct.
   void validate(Map<String, dynamic> json) {
     // Check the hash of the high level element
-    final jsonWithCorrectHashes = applyTo(json);
+    final ac = ApplyConfig.defaultConfig.copyWith(throwIfOnWrongHashes: false);
+    final jsonWithCorrectHashes = apply(json, applyConfig: ac);
     _validate(json, jsonWithCorrectHashes, '');
   }
 
@@ -87,47 +169,55 @@ class JsonHash {
   // ######################
 
   // ...........................................................................
-  static void _validate(
+  /// For testing purposes only.
+  static const testCopyJson = _copyJson;
+
+  /// For testing purposes only.
+  static const testIsBasicType = _isBasicType;
+
+  /// For testing purposes only.
+  String testJsonString(Map<String, dynamic> value) => _jsonString(value);
+
+  /// For testing purposes only.
+  dynamic testConvertBasicType(dynamic value) => _convertBasicType(value);
+
+  // ...........................................................................
+  /// Validates the hashes of the JSON object.
+  void _validate(
     Map<String, dynamic> jsonIs,
     Map<String, dynamic> jsonShould,
     String path,
   ) {
     // Check the hashes of the parent element
-    final expectedHash = jsonShould['_hash'] as String;
-    final actualHash = jsonIs['_hash'] as String?;
+    final expectedHash = jsonShould['_hash'];
+    final actualHash = jsonIs['_hash'];
 
     if (actualHash == null) {
-      final pathHint = path.isEmpty ? '' : ' at $path';
+      final pathHint = path.isNotEmpty ? ' at $path' : '';
       throw Exception('Hash$pathHint is missing.');
     }
 
     if (expectedHash != actualHash) {
-      final pathHint = path.isEmpty ? '' : ' at $path';
+      final pathHint = path.isNotEmpty ? ' at $path' : '';
       throw Exception(
         'Hash$pathHint "$actualHash" is wrong. Should be "$expectedHash".',
       );
     }
 
-    // Check the hashes of the child element
     // Check the hashes of the child elements
-    for (final item in jsonIs.entries) {
-      if (item.key == '_hash') continue;
-      if (item.value is Map<String, dynamic>) {
-        final childIs = item.value as Map<String, dynamic>;
-        final childShould = jsonShould[item.key] as Map<String, dynamic>;
-        _validate(childIs, childShould, '$path/${item.key}');
-      } else if (item.value is List<dynamic>) {
-        for (var i = 0; i < (item.value as List<dynamic>).length; i++) {
-          if (item.value[i] is Map<String, dynamic>) {
-            final itemIs = item.value[i] as Map<String, dynamic>;
-            final itemShould = (jsonShould[item.key] as List<dynamic>)[i]
-                as Map<String, dynamic>;
-
-            _validate(
-              itemIs,
-              itemShould,
-              '$path/${item.key}/$i',
-            );
+    for (final key in jsonIs.keys) {
+      if (key == '_hash') continue;
+      final value = jsonIs[key];
+      if (value is Map<String, dynamic>) {
+        final childIs = value;
+        final childShould = jsonShould[key] as Map<String, dynamic>;
+        _validate(childIs, childShould, '$path/$key');
+      } else if (value is List) {
+        for (int i = 0; i < value.length; i++) {
+          if (value[i] is Map<String, dynamic>) {
+            final itemIs = value[i] as Map<String, dynamic>;
+            final itemShould = jsonShould[key][i] as Map<String, dynamic>;
+            _validate(itemIs, itemShould, '$path/$key/$i');
           }
         }
       }
@@ -136,69 +226,84 @@ class JsonHash {
 
   // ...........................................................................
   /// Recursively adds hashes to a nested object.
-  void _addHashesToObject(
-    Map<String, dynamic> obj,
-    bool recursive,
-  ) {
-    if (!updateExistingHashes && obj.containsKey('_hash')) {
+  void _addHashesToObject(Map<String, dynamic> obj, ApplyConfig applyConfig) {
+    final updateExisting = applyConfig.updateExistingHashes;
+    final throwIfOnWrongHashes = applyConfig.throwIfOnWrongHashes;
+
+    if (!updateExisting && obj.containsKey('_hash')) {
       return;
     }
 
     // Recursively process child elements
-    obj.forEach((key, value) {
+    for (final value in obj.values) {
       if (value is Map<String, dynamic>) {
         final existingHash = value['_hash'];
-        if (existingHash != null && !recursive) {
-          return;
+        if (existingHash != null && !updateExisting) {
+          continue;
         }
-        _addHashesToObject(value, recursive);
-      } else if (value is List<dynamic>) {
-        _processList(value);
+
+        _addHashesToObject(value, applyConfig);
+      } else if (value is List) {
+        _processList(value, applyConfig);
       }
-    });
+    }
 
     // Build a new object to represent the current object for hashing
     final objToHash = <String, dynamic>{};
 
-    for (final entry in obj.entries) {
-      final key = entry.key;
+    for (final key in obj.keys) {
       if (key == '_hash') continue;
-      final value = entry.value;
 
+      final value = obj[key];
       if (value is Map<String, dynamic>) {
-        objToHash[key] = value['_hash'] as String;
-      } else if (value is List<dynamic>) {
+        objToHash[key] = value['_hash'];
+      } else if (value is List) {
         objToHash[key] = _flattenList(value);
       } else if (_isBasicType(value)) {
-        objToHash[key] = _convertBasicType(value, floatingPointPrecision);
-      } else {
-        // coverage:ignore-start
-        throw Exception('Unsupported type: ${value.runtimeType}');
-        // coverage:ignore-end
+        objToHash[key] = _convertBasicType(value);
       }
     }
 
     // Sort the object keys to ensure consistent key order
-    final sortedMap = SplayTreeMap<String, dynamic>.from(objToHash);
+    final sortedKeys = objToHash.keys.toList()..sort();
+    final sortedMap = <String, dynamic>{};
+    for (final key in sortedKeys) {
+      sortedMap[key] = objToHash[key];
+    }
+
     final sortedMapJson = _jsonString(sortedMap);
 
     // Compute the SHA-256 hash of the JSON string
-    var hash = calcHash(sortedMapJson);
+    final hash = calcHash(sortedMapJson);
+
+    // Throw if old and new hash do not match
+    if (throwIfOnWrongHashes) {
+      final oldHash = obj['_hash'];
+      if (oldHash != null && oldHash != hash) {
+        throw Exception(
+          'Hash "$oldHash" does not match the newly calculated one "$hash". '
+          'Please make sure that all systems are producing the same hashes.',
+        );
+      }
+    }
 
     // Add the hash to the original object
     obj['_hash'] = hash;
   }
 
   // ...........................................................................
-  static dynamic _convertBasicType(
-    dynamic value,
-    int floatingPointPrecision,
-  ) {
+  /// Converts a basic type to a suitable representation.
+  dynamic _convertBasicType(dynamic value) {
     if (value is String) {
       return value;
     }
     if (value is num) {
-      return _truncate(value, floatingPointPrecision);
+      if (value.toInt() == value) {
+        return value.toInt();
+      }
+
+      _checkNumber(value);
+      return value;
     } else if (value is bool) {
       return value;
     } else {
@@ -209,15 +314,15 @@ class JsonHash {
   // ...........................................................................
   /// Builds a representation of a list for hashing.
   List<dynamic> _flattenList(List<dynamic> list) {
-    var flattenedList = <dynamic>[];
+    final flattenedList = <dynamic>[];
 
     for (final element in list) {
       if (element is Map<String, dynamic>) {
-        flattenedList.add(element['_hash'] as String);
-      } else if (element is List<dynamic>) {
+        flattenedList.add(element['_hash']);
+      } else if (element is List) {
         flattenedList.add(_flattenList(element));
       } else if (_isBasicType(element)) {
-        flattenedList.add(_convertBasicType(element, floatingPointPrecision));
+        flattenedList.add(_convertBasicType(element));
       }
     }
 
@@ -226,29 +331,28 @@ class JsonHash {
 
   // ...........................................................................
   /// Recursively processes a list, adding hashes to nested objects and lists.
-  void _processList(List<dynamic> list) {
+  void _processList(List<dynamic> list, ApplyConfig applyConfig) {
     for (final element in list) {
       if (element is Map<String, dynamic>) {
-        _addHashesToObject(element, recursive);
-      } else if (element is List<dynamic>) {
-        _processList(element);
+        _addHashesToObject(element, applyConfig);
+      } else if (element is List) {
+        _processList(element, applyConfig);
       }
     }
   }
 
   // ...........................................................................
-  /// Copies the JSON object
+  /// Copies the JSON object.
   static Map<String, dynamic> _copyJson(Map<String, dynamic> json) {
     final copy = <String, dynamic>{};
-    for (final entry in json.entries) {
-      final key = entry.key;
-      final value = entry.value;
-      if (value is Map<String, dynamic>) {
-        copy[key] = _copyJson(value);
-      } else if (value is List<dynamic>) {
+    for (final key in json.keys) {
+      final value = json[key];
+      if (value is List) {
         copy[key] = _copyList(value);
       } else if (_isBasicType(value)) {
         copy[key] = value;
+      } else if (value is Map<String, dynamic>) {
+        copy[key] = _copyJson(value);
       } else {
         throw Exception('Unsupported type: ${value.runtimeType}');
       }
@@ -257,16 +361,16 @@ class JsonHash {
   }
 
   // ...........................................................................
-  /// Copies the list
+  /// Copies the list.
   static List<dynamic> _copyList(List<dynamic> list) {
     final copy = <dynamic>[];
     for (final element in list) {
-      if (element is Map<String, dynamic>) {
-        copy.add(_copyJson(element));
-      } else if (element is List<dynamic>) {
+      if (element is List) {
         copy.add(_copyList(element));
       } else if (_isBasicType(element)) {
         copy.add(element);
+      } else if (element is Map<String, dynamic>) {
+        copy.add(_copyJson(element));
       } else {
         throw Exception('Unsupported type: ${element.runtimeType}');
       }
@@ -275,53 +379,67 @@ class JsonHash {
   }
 
   // ...........................................................................
+  /// Checks if a value is a basic type.
   static bool _isBasicType(dynamic value) {
-    return value is String || value is int || value is double || value is bool;
+    return value is String || value is num || value is bool;
   }
 
   // ...........................................................................
-  /// Turns a double into a string with a given precision.
-  static num _truncate(
-    num value,
-    int precision,
-  ) {
+  /// Turns a number into a string with a given precision.
+  void _checkNumber(num value) {
+    if (value.isNaN) {
+      throw Exception('NaN is not supported.');
+    }
+
     if (value is int) {
-      return value;
+      return;
     }
 
-    String result = value.toString();
-    final parts = result.split('.');
-    final integerPart = parts[0];
-    final commaParts = parts[1];
-
-    var truncatedCommaParts = commaParts.length > precision
-        ? commaParts.substring(0, precision)
-        : commaParts;
-
-    // Remove trailing zeros
-    if (truncatedCommaParts.endsWith('0')) {
-      truncatedCommaParts = truncatedCommaParts.replaceAll(RegExp(r'0+$'), '');
+    if (_exceedsPrecision(value)) {
+      throw Exception('Number $value has a higher precision than 0.001.');
     }
 
-    if (truncatedCommaParts.isEmpty) {
-      return double.parse(integerPart).toInt();
+    if (_exceedsUpperRange(value)) {
+      throw Exception('Number $value exceeds NumberConfig.maxNum.');
     }
 
-    result = '$integerPart.$truncatedCommaParts';
-    return double.parse(result);
+    if (_exceedsLowerRange(value)) {
+      throw Exception('Number $value is smaller NumberConfig.minNum.');
+    }
   }
 
   // ...........................................................................
-  static String _jsonString(Map<String, dynamic> map) {
+  /// Checks if a number exceeds the defined range.
+  bool _exceedsUpperRange(num value) {
+    return value > config.numberConfig.maxNum;
+  }
+
+  // ...........................................................................
+  /// Checks if a number exceeds the defined range.
+  bool _exceedsLowerRange(num value) {
+    return value < config.numberConfig.minNum;
+  }
+
+  // ...........................................................................
+  /// Checks if a number exceeds the precision.
+  bool _exceedsPrecision(num value) {
+    final precision = config.numberConfig.precision;
+    final roundedValue = (value / precision).round() * precision;
+    return (value - roundedValue).abs() > double.minPositive;
+  }
+
+  // ...........................................................................
+  /// Converts a map to a JSON string.
+  String _jsonString(Map<String, dynamic> map) {
     String encodeValue(dynamic value) {
       if (value is String) {
-        return '"${value.replaceAll('"', '\\"')}"'; // Escape Anführungszeichen
-      } else if (value is num || value is bool) {
+        return '"${value.replaceAll('"', '\\"')}"'; // Escape quotes
+      } else if (value is bool) {
         return value.toString();
-      } else if (value == null) {
-        return 'null';
+      } else if (value is num) {
+        return _convertBasicType(value).toString();
       } else if (value is List) {
-        return '[${value.map((e) => encodeValue(e)).join(",")}]';
+        return '[${value.map(encodeValue).join(',')}]';
       } else if (value is Map<String, dynamic>) {
         return _jsonString(value);
       } else {
@@ -330,19 +448,8 @@ class JsonHash {
     }
 
     return '{${map.entries.map(
-          (e) => '"${e.key}"'
-              ':${encodeValue(e.value)}',
+          (entry) => '"${entry.key}":'
+              '${encodeValue(entry.value)}',
         ).join(',')}}';
   }
-
-  // ...........................................................................
-  /// For test purposes we are exposing these private methods
-  static Map<String, dynamic> get privateMethods => {
-        '_copyJson': _copyJson,
-        '_copyList': _copyList,
-        '_isBasicType': _isBasicType,
-        '_truncate': _truncate,
-        '_jsonString': _jsonString,
-        '_convertBasicType': _convertBasicType,
-      };
 }
