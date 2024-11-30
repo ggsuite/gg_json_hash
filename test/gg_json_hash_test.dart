@@ -211,8 +211,8 @@ void main() {
           });
 
           test('existing _hash should be overwritten', () {
-            final ac =
-                ApplyConfig.defaultConfig.copyWith(throwIfOnWrongHashes: false);
+            final ac = ApplyJsonHashConfig.defaultConfig
+                .copyWith(throwIfOnWrongHashes: false);
 
             final json = jh.apply(
               {
@@ -418,13 +418,14 @@ void main() {
       });
 
       group('writes the hashes directly into the given json', () {
-        group('when ApplyConfig.inPlace is true', () {
+        group('when ApplyJsonHashConfig.inPlace is true', () {
           test('writes hashes into original json', () {
             final json = {
               'key': 'value',
             };
 
-            final ac = ApplyConfig.defaultConfig.copyWith(inPlace: true);
+            final ac =
+                ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: true);
             final hashedJson = jh.apply(json, applyConfig: ac);
             expect(
               hashedJson,
@@ -440,12 +441,13 @@ void main() {
       });
 
       group('writes the hashes into a copy', () {
-        group('when ApplyConfig.inPlace is false', () {
+        group('when ApplyJsonHashConfig.inPlace is false', () {
           test('does not touch the original object', () {
             final json = {
               'key': 'value',
             };
-            final ac = ApplyConfig.defaultConfig.copyWith(inPlace: false);
+            final ac =
+                ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: false);
 
             // The returned copy has the hashes
             final hashedJson = jh.apply(json, applyConfig: ac);
@@ -469,14 +471,15 @@ void main() {
       });
 
       group('replaces/updates existing hashes', () {
-        group('when ApplyConfig.updateExistingHashes is set to true', () {
+        group('when ApplyJsonHashConfig.updateExistingHashes is set to true',
+            () {
           bool allHashesChanged(Map<String, dynamic> json) {
             return json['a']['_hash'] != 'hash_a' &&
                 json['a']['b']['_hash'] != 'hash_b' &&
                 json['a']['b']['c']['_hash'] != 'hash_c';
           }
 
-          final ac = ApplyConfig.defaultConfig.copyWith(
+          final ac = ApplyJsonHashConfig.defaultConfig.copyWith(
             inPlace: true,
             throwIfOnWrongHashes: false,
           );
@@ -503,8 +506,9 @@ void main() {
       });
 
       group('does not touch existing hashes', () {
-        group('when ApplyConfig.updateExistingHashes is set to false', () {
-          var ac = ApplyConfig.defaultConfig.copyWith(inPlace: true);
+        group('when ApplyJsonHashConfig.updateExistingHashes is set to false',
+            () {
+          var ac = ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: true);
 
           late Map<String, dynamic> json;
 
@@ -772,7 +776,10 @@ void main() {
 
               expect(
                 message,
-                equals('Exception: Number $val exceeds NumberConfig.maxNum.'),
+                equals(
+                  'Exception: Number $val exceeds '
+                  'NumberHashingConfig.maxNum.',
+                ),
               );
             }
 
@@ -801,7 +808,8 @@ void main() {
               expect(
                 message,
                 equals(
-                  'Exception: Number $val is smaller NumberConfig.minNum.',
+                  'Exception: Number $val is smaller '
+                  'NumberHashingConfig.minNum.',
                 ),
               );
             }
@@ -815,15 +823,16 @@ void main() {
 
       group('throws, when existing hashes do not match newly calculated ones',
           () {
-        group('when ApplyConfig.throwIfOnWrongHashes is set to true', () {
+        group('when ApplyJsonHashConfig.throwIfOnWrongHashes is set to true',
+            () {
           test('with a simple json', () {
             final json = {
               'key': 'value',
               '_hash': 'wrongHash',
             };
 
-            final ac =
-                ApplyConfig.defaultConfig.copyWith(throwIfOnWrongHashes: true);
+            final ac = ApplyJsonHashConfig.defaultConfig
+                .copyWith(throwIfOnWrongHashes: true);
 
             String message = '';
             try {
@@ -844,15 +853,16 @@ void main() {
           });
         });
 
-        group('but not when ApplyConfig.throwIfOnWrongHashes is set to false',
-            () {
+        group(
+            'but not when ApplyJsonHashConfig.throwIfOnWrongHashes '
+            'is set to false', () {
           test('with a simple json', () {
             final json = {
               'key': 'value',
               '_hash': 'wrongHash',
             };
 
-            final ac = ApplyConfig.defaultConfig.copyWith(
+            final ac = ApplyJsonHashConfig.defaultConfig.copyWith(
               throwIfOnWrongHashes: false,
               inPlace: true,
             );
@@ -1331,10 +1341,10 @@ void main() {
       });
     });
 
-    group('NumberConfig', () {
+    group('NumberHashingConfig', () {
       group('copyWith', () {
         test('no params changed', () {
-          const nc = NumberConfig();
+          const nc = NumberHashingConfig();
           final nc2 = nc.copyWith();
           expect(nc.maxNum, equals(nc2.maxNum));
           expect(nc.minNum, equals(nc2.minNum));
@@ -1342,7 +1352,7 @@ void main() {
         });
 
         test('with all parameters changed', () {
-          const nc = NumberConfig();
+          const nc = NumberHashingConfig();
           final nc2 = nc.copyWith(
             maxNum: 100,
             minNum: -100,

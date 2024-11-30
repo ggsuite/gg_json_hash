@@ -14,9 +14,9 @@ import 'package:crypto/crypto.dart';
 /// across different platforms. Especially rounding errors can lead to
 /// different hashes although the numbers are considered equal. This
 /// class provides a configuration for hashing numbers.
-class NumberConfig {
+class NumberHashingConfig {
   /// Constructor
-  const NumberConfig({
+  const NumberHashingConfig({
     this.precision = 0.001,
     this.maxNum = 1000 * 1000 * 1000,
     this.minNum = -1000 * 1000 * 1000,
@@ -36,16 +36,17 @@ class NumberConfig {
   final bool throwOnRangeError;
 
   /// Default configuration.
-  static const NumberConfig defaultConfig = NumberConfig();
+  static const NumberHashingConfig defaultConfig = NumberHashingConfig();
 
-  /// Creates a copy of the current NumberConfig with optional new values.
-  NumberConfig copyWith({
+  /// Creates a copy of the current NumberHashingConfig
+  /// with optional new values.
+  NumberHashingConfig copyWith({
     double? precision,
     double? maxNum,
     double? minNum,
     bool? throwOnRangeError,
   }) {
-    return NumberConfig(
+    return NumberHashingConfig(
       precision: precision ?? this.precision,
       maxNum: maxNum ?? this.maxNum,
       minNum: minNum ?? this.minNum,
@@ -56,9 +57,9 @@ class NumberConfig {
 
 // .............................................................................
 /// When writing hashes into a given JSON object, we have various options.
-class ApplyConfig {
+class ApplyJsonHashConfig {
   /// Constructor
-  const ApplyConfig({
+  const ApplyJsonHashConfig({
     this.inPlace = false,
     this.updateExistingHashes = true,
     this.throwIfOnWrongHashes = true,
@@ -74,15 +75,16 @@ class ApplyConfig {
   final bool throwIfOnWrongHashes;
 
   /// Default configuration.
-  static const ApplyConfig defaultConfig = ApplyConfig();
+  static const ApplyJsonHashConfig defaultConfig = ApplyJsonHashConfig();
 
-  /// Creates a copy of the current ApplyConfig with optional new values.
-  ApplyConfig copyWith({
+  /// Creates a copy of the current ApplyJsonHashConfig
+  /// with optional new values.
+  ApplyJsonHashConfig copyWith({
     bool? inPlace,
     bool? updateExistingHashes,
     bool? throwIfOnWrongHashes,
   }) {
-    return ApplyConfig(
+    return ApplyJsonHashConfig(
       inPlace: inPlace ?? this.inPlace,
       updateExistingHashes: updateExistingHashes ?? this.updateExistingHashes,
       throwIfOnWrongHashes: throwIfOnWrongHashes ?? this.throwIfOnWrongHashes,
@@ -97,7 +99,7 @@ class HashConfig {
   const HashConfig({
     this.hashLength = 22,
     this.hashAlgorithm = 'SHA-256',
-    this.numberConfig = NumberConfig.defaultConfig,
+    this.numberConfig = NumberHashingConfig.defaultConfig,
   });
 
   /// Length of the hash.
@@ -107,7 +109,7 @@ class HashConfig {
   final String hashAlgorithm;
 
   /// Configuration for hashing numbers.
-  final NumberConfig numberConfig;
+  final NumberHashingConfig numberConfig;
 
   /// Default configuration.
   static const HashConfig defaultConfig = HashConfig();
@@ -129,7 +131,7 @@ class JsonHash {
   /// Writes hashes into the JSON object.
   Map<String, dynamic> apply(
     Map<String, dynamic> json, {
-    ApplyConfig applyConfig = ApplyConfig.defaultConfig,
+    ApplyJsonHashConfig applyConfig = ApplyJsonHashConfig.defaultConfig,
   }) {
     final copy = applyConfig.inPlace ? json : _copyJson(json);
     _addHashesToObject(copy, applyConfig);
@@ -140,7 +142,8 @@ class JsonHash {
   /// Writes hashes into a JSON string.
   String applyToJsonString(String jsonString) {
     final json = jsonDecode(jsonString) as Map<String, dynamic>;
-    final applyConfig = ApplyConfig.defaultConfig.copyWith(inPlace: true);
+    final applyConfig =
+        ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: true);
     final hashedJson = apply(json, applyConfig: applyConfig);
     return jsonEncode(hashedJson);
   }
@@ -159,7 +162,8 @@ class JsonHash {
   /// Throws if hashes are not correct.
   void validate(Map<String, dynamic> json) {
     // Check the hash of the high level element
-    final ac = ApplyConfig.defaultConfig.copyWith(throwIfOnWrongHashes: false);
+    final ac =
+        ApplyJsonHashConfig.defaultConfig.copyWith(throwIfOnWrongHashes: false);
     final jsonWithCorrectHashes = apply(json, applyConfig: ac);
     _validate(json, jsonWithCorrectHashes, '');
   }
@@ -226,7 +230,10 @@ class JsonHash {
 
   // ...........................................................................
   /// Recursively adds hashes to a nested object.
-  void _addHashesToObject(Map<String, dynamic> obj, ApplyConfig applyConfig) {
+  void _addHashesToObject(
+    Map<String, dynamic> obj,
+    ApplyJsonHashConfig applyConfig,
+  ) {
     final updateExisting = applyConfig.updateExistingHashes;
     final throwIfOnWrongHashes = applyConfig.throwIfOnWrongHashes;
 
@@ -332,7 +339,7 @@ class JsonHash {
 
   // ...........................................................................
   /// Recursively processes a list, adding hashes to nested objects and lists.
-  void _processList(List<dynamic> list, ApplyConfig applyConfig) {
+  void _processList(List<dynamic> list, ApplyJsonHashConfig applyConfig) {
     for (final element in list) {
       if (element is Map<String, dynamic>) {
         _addHashesToObject(element, applyConfig);
@@ -401,11 +408,11 @@ class JsonHash {
     }
 
     if (_exceedsUpperRange(value)) {
-      throw Exception('Number $value exceeds NumberConfig.maxNum.');
+      throw Exception('Number $value exceeds NumberHashingConfig.maxNum.');
     }
 
     if (_exceedsLowerRange(value)) {
-      throw Exception('Number $value is smaller NumberConfig.minNum.');
+      throw Exception('Number $value is smaller NumberHashingConfig.minNum.');
     }
   }
 
