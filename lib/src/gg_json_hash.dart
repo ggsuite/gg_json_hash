@@ -27,10 +27,10 @@ class NumberConfig {
   final double precision;
 
   /// Maximum number for hashing.
-  final int maxNum;
+  final double maxNum;
 
   /// Minimum number for hashing.
-  final int minNum;
+  final double minNum;
 
   /// Throw an error if a number is out of range.
   final bool throwOnRangeError;
@@ -41,8 +41,8 @@ class NumberConfig {
   /// Creates a copy of the current NumberConfig with optional new values.
   NumberConfig copyWith({
     double? precision,
-    int? maxNum,
-    int? minNum,
+    double? maxNum,
+    double? minNum,
     bool? throwOnRangeError,
   }) {
     return NumberConfig(
@@ -298,11 +298,12 @@ class JsonHash {
       return value;
     }
     if (value is num) {
+      _checkNumber(value);
+
       if (value.toInt() == value) {
         return value.toInt();
       }
 
-      _checkNumber(value);
       return value;
     } else if (value is bool) {
       return value;
@@ -425,7 +426,8 @@ class JsonHash {
   bool _exceedsPrecision(num value) {
     final precision = config.numberConfig.precision;
     final roundedValue = (value / precision).round() * precision;
-    return (value - roundedValue).abs() > double.minPositive;
+    const epsilon = 2.220446049250313e-16;
+    return (value - roundedValue).abs() > epsilon;
   }
 
   // ...........................................................................

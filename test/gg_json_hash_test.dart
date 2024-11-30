@@ -4,15 +4,864 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
+import 'dart:convert';
+
 import 'package:gg_json_hash/gg_json_hash.dart';
 import 'package:test/test.dart';
+
+const exampleJson = '''{
+  "layerA": {
+    "data": [
+      {
+        "w": 600,
+        "w1": 100
+      },
+      {
+        "w": 700,
+        "w1": 100
+      }
+    ]
+  },
+
+  "layerB": {
+    "data": [
+      {
+        "d": 268,
+        "d1": 100
+      }
+    ]
+  },
+
+  "layerC": {
+    "data": [
+      {
+        "h": 800
+      }
+    ]
+  },
+
+  "layerD": {
+    "data": [
+      {
+        "wMin": 0,
+        "wMax": 900,
+        "w1Min": 0,
+        "w1Max": 900
+      }
+    ]
+  },
+
+  "layerE": {
+    "data": [
+      {
+        "type": "XYZABC",
+        "widths": "sLZpHAffgchgJnA++HqKtO",
+        "depths": "k1IL2ctZHw4NpaA34w0d0I",
+        "heights": "GBLHz0ayRkVUlms1wHDaJq",
+        "ranges": "9rohAG49drWZs9tew4rDef"
+      }
+    ]
+  },
+
+  "layerF": {
+    "data": [
+      {
+        "type": "XYZABC",
+        "name": "Unterschrank 60cm"
+      }
+    ]
+  },
+
+  "layerG": {
+    "data": [
+      {
+        "type": "XYZABC",
+        "name": "Base Cabinet 23.5"
+      }
+    ]
+  }
+}''';
+
+const exampleJsonWithHashes = '''{
+  "layerA": {
+    "data": [
+      {
+        "w": 600,
+        "w1": 100,
+        "_hash": "ajRQhCx6QLPI8227B72r8I"
+      },
+      {
+        "w": 700,
+        "w1": 100,
+        "_hash": "Jf177UAntzI4rIjKiU_MVt"
+      }
+    ],
+    "_hash": "qCgcNNF3wJPfx0rkRDfoSY"
+  },
+  "layerB": {
+    "data": [
+      {
+        "d": 268,
+        "d1": 100,
+        "_hash": "9mJ7aZJexhfz8IfwF6bsuW"
+      }
+    ],
+    "_hash": "tb0ffNF2ePpqsRxmvMDRrt"
+  },
+  "layerC": {
+    "data": [
+      {
+        "h": 800,
+        "_hash": "KvMHhk1dYYQ2o5Srt6pTUN"
+      }
+    ],
+    "_hash": "Z4km_FzQoxyck-YHQDZMtV"
+  },
+  "layerD": {
+    "data": [
+      {
+        "wMin": 0,
+        "wMax": 900,
+        "w1Min": 0,
+        "w1Max": 900,
+        "_hash": "6uw0BSIllrk6DuKyvQh-Rg"
+      }
+    ],
+    "_hash": "qFDAzWUsTnqICnpc_rJtax"
+  },
+  "layerE": {
+    "data": [
+      {
+        "type": "XYZABC",
+        "widths": "sLZpHAffgchgJnA++HqKtO",
+        "depths": "k1IL2ctZHw4NpaA34w0d0I",
+        "heights": "GBLHz0ayRkVUlms1wHDaJq",
+        "ranges": "9rohAG49drWZs9tew4rDef",
+        "_hash": "65LigWuYVGgifKnEZaOJET"
+      }
+    ],
+    "_hash": "pDRglh2oWJcghTzzrzTLw6"
+  },
+  "layerF": {
+    "data": [
+      {
+        "type": "XYZABC",
+        "name": "Unterschrank 60cm",
+        "_hash": "gjzETUIUf563ZJNHVEY9Wt"
+      }
+    ],
+    "_hash": "r1u6gR8WLzPAZ3lEsAqREP"
+  },
+  "layerG": {
+    "data": [
+      {
+        "type": "XYZABC",
+        "name": "Base Cabinet 23.5",
+        "_hash": "DEyuShUHDpWSJ7Rq_a3uz6"
+      }
+    ],
+    "_hash": "3meyGs7XhOh8gWFNQFYZDI"
+  },
+  "_hash": "OmmdaqCAhcIKnDm7lT-_gI"
+}''';
 
 void main() {
   group('JsonHash', () {
     late JsonHash jh;
 
     setUp(() {
-      jh = JsonHash();
+      jh = JsonHash.defaultInstance;
+    });
+
+    group('apply(json)', () {
+      group('adds correct hashes to', () {
+        group('simple json', () {
+          group('containing only one key value pair', () {
+            test('with a string value', () {
+              final json = jh.apply({'key': 'value'});
+              expect(json['key'], equals('value'));
+              final expectedHash = jh.calcHash('{"key":"value"}');
+              expect(json['_hash'], equals(expectedHash));
+              expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
+            });
+
+            test('with an int value', () {
+              final json = jh.apply({'key': 1});
+              expect(json['key'], equals(1));
+              final expectedHash = jh.calcHash('{"key":1}');
+              expect(json['_hash'], equals(expectedHash));
+              expect(json['_hash'], equals('t4HVsGBJblqznOBwy6IeLt'));
+            });
+
+            test('with a double value without commas', () {
+              final json = jh.apply({'key': 1.0});
+              expect(json['key'], equals(1));
+              final expectedHash = jh.calcHash('{"key":1}');
+              expect(json['_hash'], equals(expectedHash));
+              expect(json['_hash'], equals('t4HVsGBJblqznOBwy6IeLt'));
+            });
+
+            test('with a bool value', () {
+              final json = jh.apply({'key': true});
+              expect(json['key'], equals(true));
+              final expectedHash = jh.calcHash('{"key":true}');
+              expect(json['_hash'], equals(expectedHash));
+              expect(json['_hash'], equals('dNkCrIe79x2dPyf5fywwYO'));
+            });
+          });
+
+          test('existing _hash should be overwritten', () {
+            final ac =
+                ApplyConfig.defaultConfig.copyWith(throwIfOnWrongHashes: false);
+
+            final json = jh.apply(
+              {
+                'key': 'value',
+                '_hash': 'oldHash',
+              },
+              applyConfig: ac,
+            );
+            expect(json['key'], equals('value'));
+            final expectedHash = jh.calcHash('{"key":"value"}');
+            expect(json['_hash'], equals(expectedHash));
+            expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
+          });
+
+          group('containing three key value pairs', () {
+            final json0 = {
+              'a': 'value',
+              'b': 1.0,
+              'c': true,
+            };
+
+            final json1 = {
+              'b': 1.0,
+              'a': 'value',
+              'c': true,
+            };
+
+            late Map<String, dynamic> j0;
+            late Map<String, dynamic> j1;
+
+            setUp(() {
+              j0 = jh.apply(json0);
+              j1 = jh.apply(json1);
+            });
+
+            test('should create a string of key value pairs and hash it', () {
+              final expectedHash = jh.calcHash('{"a":"value","b":1,"c":true}');
+
+              expect(j0['_hash'], equals(expectedHash));
+              expect(j1['_hash'], equals(expectedHash));
+            });
+
+            test('should work independent of key order', () {
+              expect(j0, equals(j1));
+              expect(j0['_hash'], equals(j1['_hash']));
+              expect(true.toString(), equals('true'));
+            });
+          });
+        });
+
+        group('nested json', () {
+          test('of level 1', () {
+            final parent = jh.apply({
+              'key': 'value',
+              'child': {
+                'key': 'value',
+              },
+            });
+
+            final child = parent['child'];
+            final childHash = jh.calcHash(jsonEncode({'key': 'value'}));
+            expect(child['_hash'], equals(childHash));
+
+            final parentHash = jh.calcHash(
+              jsonEncode({'child': childHash, 'key': 'value'}),
+            );
+
+            expect(parent['_hash'], equals(parentHash));
+          });
+
+          test('of level 2', () {
+            final parent = jh.apply({
+              'key': 'value',
+              'child': {
+                'key': 'value',
+                'grandChild': {
+                  'key': 'value',
+                },
+              },
+            });
+
+            final grandChild = parent['child']['grandChild'];
+            final grandChildHash = jh.calcHash(jsonEncode({'key': 'value'}));
+            expect(grandChild['_hash'], equals(grandChildHash));
+
+            final child = parent['child'];
+            final childHash = jh.calcHash(
+              jsonEncode({'grandChild': grandChildHash, 'key': 'value'}),
+            );
+            expect(child['_hash'], equals(childHash));
+
+            final parentHash = jh.calcHash(
+              jsonEncode({'child': childHash, 'key': 'value'}),
+            );
+            expect(parent['_hash'], equals(parentHash));
+          });
+        });
+
+        test('complete json example', () {
+          final json = jsonDecode(exampleJson) as Map<String, dynamic>;
+          final hashedJson = jh.apply(json);
+
+          final hashedJsonString =
+              const JsonEncoder.withIndent('  ').convert(hashedJson);
+          expect(hashedJsonString, equals(exampleJsonWithHashes));
+        });
+
+        group('data containing arrays', () {
+          group('on top level', () {
+            group('containing only simple types', () {
+              test('should convert all values to strings and hash it', () {
+                final json = jh.apply({
+                  'key': ['value', 1.0, true],
+                });
+
+                final expectedHash = jh.calcHash(
+                  jsonEncode({
+                    'key': ['value', 1, true],
+                  }),
+                );
+
+                expect(json['_hash'], equals(expectedHash));
+                expect(json['_hash'], equals('nbNb1YfpgqnPfyFTyCQ5YF'));
+              });
+            });
+
+            group('containing nested objects', () {
+              group('should hash the nested objects', () {
+                group('and use the hash instead of the stringified value', () {
+                  test('with a complicated array', () {
+                    final json = jh.apply({
+                      'array': [
+                        'key',
+                        1.0,
+                        true,
+                        {'key1': 'value1'},
+                        {'key0': 'value0'},
+                      ],
+                    });
+
+                    final h0 = jh.calcHash(jsonEncode({'key0': 'value0'}));
+                    final h1 = jh.calcHash(jsonEncode({'key1': 'value1'}));
+                    final expectedHash = jh.calcHash(
+                      jsonEncode({
+                        'array': ['key', 1, true, h1, h0],
+                      }),
+                    );
+
+                    expect(json['_hash'], equals(expectedHash));
+                    expect(json['_hash'], equals('13h_Z0wZCF4SQsTyMyq5dV'));
+                  });
+
+                  test('with a simple array', () {
+                    final json = jh.apply({
+                      'array': [
+                        {'key': 'value'},
+                      ],
+                    });
+
+                    final itemHash = jh.calcHash(jsonEncode({'key': 'value'}));
+                    final array = json['array'];
+                    final item0 = array[0];
+                    expect(item0['_hash'], equals(itemHash));
+                    expect(itemHash, equals('5Dq88zdSRIOcAS-WM_lYYt'));
+
+                    final expectedHash = jh.calcHash(
+                      jsonEncode({
+                        'array': [itemHash],
+                      }),
+                    );
+
+                    expect(json['_hash'], equals(expectedHash));
+                    expect(json['_hash'], equals('zYcZBAUGLgR0ygMxi0V5ZT'));
+                  });
+                });
+              });
+            });
+
+            group('containing nested arrays', () {
+              test('should hash the nested arrays', () {
+                final json = jh.apply({
+                  'array': [
+                    ['key', 1.0, true],
+                    'hello',
+                  ],
+                });
+
+                final jsonHash = jh.calcHash(
+                  jsonEncode({
+                    'array': [
+                      ['key', 1, true],
+                      'hello',
+                    ],
+                  }),
+                );
+
+                expect(json['_hash'], equals(jsonHash));
+                expect(json['_hash'], equals('1X_6COC1sP5ECuHvKtVoDT'));
+              });
+            });
+          });
+        });
+      });
+
+      group('writes the hashes directly into the given json', () {
+        group('when ApplyConfig.inPlace is true', () {
+          test('writes hashes into original json', () {
+            final json = {
+              'key': 'value',
+            };
+
+            final ac = ApplyConfig.defaultConfig.copyWith(inPlace: true);
+            final hashedJson = jh.apply(json, applyConfig: ac);
+            expect(
+              hashedJson,
+              equals({
+                'key': 'value',
+                '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
+              }),
+            );
+
+            expect(json, equals(hashedJson));
+          });
+        });
+      });
+
+      group('writes the hashes into a copy', () {
+        group('when ApplyConfig.inPlace is false', () {
+          test('does not touch the original object', () {
+            final json = {
+              'key': 'value',
+            };
+            final ac = ApplyConfig.defaultConfig.copyWith(inPlace: false);
+
+            // The returned copy has the hashes
+            final hashedJson = jh.apply(json, applyConfig: ac);
+            expect(
+              hashedJson,
+              equals({
+                'key': 'value',
+                '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
+              }),
+            );
+
+            // The original json is untouched
+            expect(
+              json,
+              equals({
+                'key': 'value',
+              }),
+            );
+          });
+        });
+      });
+
+      group('replaces/updates existing hashes', () {
+        group('when ApplyConfig.updateExistingHashes is set to true', () {
+          bool allHashesChanged(Map<String, dynamic> json) {
+            return json['a']['_hash'] != 'hash_a' &&
+                json['a']['b']['_hash'] != 'hash_b' &&
+                json['a']['b']['c']['_hash'] != 'hash_c';
+          }
+
+          final ac = ApplyConfig.defaultConfig.copyWith(
+            inPlace: true,
+            throwIfOnWrongHashes: false,
+          );
+
+          test('should recalculate existing hashes', () {
+            final json = <String, dynamic>{
+              'a': {
+                '_hash': 'hash_a',
+                'b': {
+                  '_hash': 'hash_b',
+                  'c': {
+                    '_hash': 'hash_c',
+                    'd': 'value',
+                  },
+                },
+              },
+            };
+
+            final ac2 = ac.copyWith(updateExistingHashes: true);
+            jh.apply(json, applyConfig: ac2);
+            expect(allHashesChanged(json), isTrue);
+          });
+        });
+      });
+
+      group('does not touch existing hashes', () {
+        group('when ApplyConfig.updateExistingHashes is set to false', () {
+          var ac = ApplyConfig.defaultConfig.copyWith(inPlace: true);
+
+          late Map<String, dynamic> json;
+
+          bool noHashesChanged() {
+            return json['a']['_hash'] == 'hash_a' &&
+                json['a']['b']['_hash'] == 'hash_b' &&
+                json['a']['b']['c']['_hash'] == 'hash_c';
+          }
+
+          setUp(() {
+            json = {
+              'a': {
+                '_hash': 'hash_a',
+                'b': {
+                  '_hash': 'hash_b',
+                  'c': {
+                    '_hash': 'hash_c',
+                    'd': 'value',
+                  },
+                },
+              },
+            };
+          });
+
+          List<String> changedHashes() {
+            final result = <String>[];
+            if (json['a']['_hash'] != 'hash_a') {
+              result.add('a');
+            }
+
+            if (json['a']['b']['_hash'] != 'hash_b') {
+              result.add('b');
+            }
+
+            if (json['a']['b']['c']['_hash'] != 'hash_c') {
+              result.add('c');
+            }
+
+            return result;
+          }
+
+          test('with all objects having hashes', () {
+            ac = ac.copyWith(updateExistingHashes: false);
+            jh.apply(json, applyConfig: ac);
+            expect(noHashesChanged(), isTrue);
+          });
+
+          test('with parents have no hashes', () {
+            json['a'].remove('_hash');
+            ac = ac.copyWith(updateExistingHashes: false);
+            jh.apply(json, applyConfig: ac);
+            expect(changedHashes(), equals(['a']));
+
+            json['a'].remove('_hash');
+            json['a']['b'].remove('_hash');
+            ac = ac.copyWith(updateExistingHashes: false);
+            jh.apply(json, applyConfig: ac);
+            expect(changedHashes(), equals(['a', 'b']));
+          });
+        });
+      });
+
+      group('checks numbers', () {
+        test('.e. throws when NaN is given', () {
+          String? message;
+
+          try {
+            jh.apply({
+              'key': double.nan,
+            });
+          } catch (e) {
+            message = e.toString();
+          }
+
+          expect(message, equals('Exception: NaN is not supported.'));
+        });
+
+        test('i.e. throws when json contains an unsupported type', () {
+          String? message;
+
+          try {
+            jh.apply({
+              'key': Error(),
+            });
+          } catch (e) {
+            message = e.toString();
+          }
+
+          expect(message, equals('Exception: Unsupported type: Error'));
+        });
+
+        group('i.e. ensures numbers have the right precision', () {
+          group(
+            'i.e. it does not throw when numbers have right maximum precision',
+            () {
+              test('e.g. 1.001', () {
+                expect(() => jh.apply({'key': 1.001}), returnsNormally);
+              });
+
+              test('e.g. 1.123', () {
+                expect(() => jh.apply({'key': 1.123}), returnsNormally);
+              });
+
+              test('e.g. -1.123', () {
+                expect(() => jh.apply({'key': -1.123}), returnsNormally);
+              });
+
+              test('e.g. 1e-2', () {
+                expect(() => jh.apply({'key': 1e-2}), returnsNormally);
+              });
+            },
+          );
+
+          group(
+            'i.e. it does throw when numbers do not match maximum precision',
+            () {
+              group('e.g. numbers have more commas then precision allows', () {
+                test('e.g. 1.0001', () {
+                  expect(jh.config.numberConfig.precision, equals(0.001));
+
+                  String message = '';
+                  try {
+                    jh.apply({
+                      'key': 1.0001,
+                    });
+                  } catch (e) {
+                    message = e.toString();
+                  }
+
+                  expect(
+                    message,
+                    equals(
+                      'Exception: Number 1.0001 has a higher precision '
+                      'than 0.001.',
+                    ),
+                  );
+                });
+
+                test('e.g. 1.1234', () {
+                  expect(jh.config.numberConfig.precision, equals(0.001));
+
+                  String message = '';
+                  try {
+                    jh.apply({
+                      'key': 1.1234,
+                    });
+                  } catch (e) {
+                    message = e.toString();
+                  }
+
+                  expect(
+                    message,
+                    equals(
+                      'Exception: Number 1.1234 has a higher precision '
+                      'than 0.001.',
+                    ),
+                  );
+                });
+
+                test('e.g. -1.0001', () {
+                  expect(jh.config.numberConfig.precision, equals(0.001));
+
+                  String message = '';
+                  try {
+                    jh.apply({
+                      'key': -1.0001,
+                    });
+                  } catch (e) {
+                    message = e.toString();
+                  }
+
+                  expect(
+                    message,
+                    equals(
+                      'Exception: Number -1.0001 has a higher precision '
+                      'than 0.001.',
+                    ),
+                  );
+                });
+
+                test('e.g. -1.1234', () {
+                  expect(jh.config.numberConfig.precision, equals(0.001));
+
+                  String message = '';
+                  try {
+                    jh.apply({
+                      'key': -1.1234,
+                    });
+                  } catch (e) {
+                    message = e.toString();
+                  }
+
+                  expect(
+                    message,
+                    equals(
+                      'Exception: Number -1.1234 has a higher precision '
+                      'than 0.001.',
+                    ),
+                  );
+                });
+
+                test('e.g. 9839089403.1235', () {
+                  expect(jh.config.numberConfig.precision, equals(0.001));
+
+                  String message = '';
+                  try {
+                    jh.apply({
+                      'key': 9839089403.1235,
+                    });
+                  } catch (e) {
+                    message = e.toString();
+                  }
+
+                  expect(
+                    message,
+                    equals(
+                      'Exception: Number 9839089403.1235 has a higher '
+                      'precision than 0.001.',
+                    ),
+                  );
+                });
+
+                test('e.g. 9839089403.1235', () {
+                  expect(jh.config.numberConfig.precision, equals(0.001));
+
+                  String message = '';
+                  try {
+                    jh.apply({
+                      'key': 0.1e-4,
+                    });
+                  } catch (e) {
+                    message = e.toString();
+                  }
+
+                  expect(
+                    message,
+                    equals(
+                      'Exception: Number 0.00001 has a higher precision '
+                      'than 0.001.',
+                    ),
+                  );
+                });
+              });
+            },
+          );
+        });
+
+        group('i.e. ensures numbers are in the given range', () {
+          group('i.e. values exceed NumbersConfig.maxNum', () {
+            late double max;
+
+            setUp(() {
+              max = jh.config.numberConfig.maxNum;
+            });
+
+            void check(double val) {
+              String message = '';
+              val = double.parse(val.toStringAsFixed(3));
+
+              try {
+                jh.apply({'key': val});
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                equals('Exception: Number $val exceeds NumberConfig.maxNum.'),
+              );
+            }
+
+            test('.e.g. shortly above the maximum', () {
+              check(max + 0.001);
+            });
+          });
+
+          group('i.e. values exceed NumbersConfig.maxNum', () {
+            late double min;
+
+            setUp(() {
+              min = jh.config.numberConfig.minNum;
+            });
+
+            void check(double val) {
+              String message = '';
+              val = double.parse(val.toStringAsFixed(3));
+
+              try {
+                jh.apply({'key': val});
+              } catch (e) {
+                message = e.toString();
+              }
+
+              expect(
+                message,
+                equals(
+                  'Exception: Number $val is smaller NumberConfig.minNum.',
+                ),
+              );
+            }
+
+            test('.e.g. shortly above the maximum', () {
+              check(min - 0.001);
+            });
+          });
+        });
+      });
+
+      group('throws, when existing hashes do not match newly calculated ones',
+          () {
+        group('when ApplyConfig.throwIfOnWrongHashes is set to true', () {
+          test('with a simple json', () {
+            final json = {
+              'key': 'value',
+              '_hash': 'wrongHash',
+            };
+
+            final ac =
+                ApplyConfig.defaultConfig.copyWith(throwIfOnWrongHashes: true);
+
+            String message = '';
+            try {
+              jh.apply(json, applyConfig: ac);
+            } catch (e) {
+              message = e.toString();
+            }
+
+            expect(
+              message,
+              equals(
+                'Exception: Hash "wrongHash" does not match the newly '
+                'calculated one "5Dq88zdSRIOcAS-WM_lYYt". '
+                'Please make sure that all systems are producing '
+                'the same hashes.',
+              ),
+            );
+          });
+        });
+
+        group('but not when ApplyConfig.throwIfOnWrongHashes is set to false',
+            () {
+          test('with a simple json', () {
+            final json = {
+              'key': 'value',
+              '_hash': 'wrongHash',
+            };
+
+            final ac = ApplyConfig.defaultConfig.copyWith(
+              throwIfOnWrongHashes: false,
+              inPlace: true,
+            );
+
+            jh.apply(json, applyConfig: ac);
+            expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
+          });
+        });
+      });
     });
 
     group('applyToJsonString(String)', () {
@@ -214,7 +1063,8 @@ void main() {
 
             expect(
               message,
-              'Exception: Hash "wrongHash" is wrong. Should be "RBNvo1WzZ4oRRq0W9-hknp".',
+              'Exception: Hash "wrongHash" is wrong. '
+              'Should be "RBNvo1WzZ4oRRq0W9-hknp".',
             );
           });
         });
@@ -254,7 +1104,8 @@ void main() {
 
             expect(
               message,
-              'Exception: Hash "wrongHash" is wrong. Should be "5Dq88zdSRIOcAS-WM_lYYt".',
+              'Exception: Hash "wrongHash" is wrong. '
+              'Should be "5Dq88zdSRIOcAS-WM_lYYt".',
             );
           });
         });
@@ -342,7 +1193,8 @@ void main() {
 
               expect(
                 message,
-                'Exception: Hash "wrongHash" is wrong. Should be "oEE88mHZ241BRlAfyG8n9X".',
+                'Exception: Hash "wrongHash" is wrong. '
+                'Should be "oEE88mHZ241BRlAfyG8n9X".',
               );
             });
 
@@ -478,155 +1330,29 @@ void main() {
         });
       });
     });
+
+    group('NumberConfig', () {
+      group('copyWith', () {
+        test('no params changed', () {
+          const nc = NumberConfig();
+          final nc2 = nc.copyWith();
+          expect(nc.maxNum, equals(nc2.maxNum));
+          expect(nc.minNum, equals(nc2.minNum));
+          expect(nc.precision, equals(nc2.precision));
+        });
+
+        test('with all parameters changed', () {
+          const nc = NumberConfig();
+          final nc2 = nc.copyWith(
+            maxNum: 100,
+            minNum: -100,
+            precision: 0.1,
+          );
+          expect(nc2.maxNum, equals(100));
+          expect(nc2.minNum, equals(-100));
+          expect(nc2.precision, equals(0.1));
+        });
+      });
+    });
   });
-
-  const exampleJson = '''{
-    "layerA": {
-      "data": [
-        {
-          "w": 600,
-          "w1": 100
-        },
-        {
-          "w": 700,
-          "w1": 100
-        }
-      ]
-    },
-    "layerB": {
-      "data": [
-        {
-          "d": 268,
-          "d1": 100
-        }
-      ]
-    },
-    "layerC": {
-      "data": [
-        {
-          "h": 800
-        }
-      ]
-    },
-    "layerD": {
-      "data": [
-        {
-          "wMin": 0,
-          "wMax": 900,
-          "w1Min": 0,
-          "w1Max": 900
-        }
-      ]
-    },
-    "layerE": {
-      "data": [
-        {
-          "type": "XYZABC",
-          "widths": "sLZpHAffgchgJnA++HqKtO",
-          "depths": "k1IL2ctZHw4NpaA34w0d0I",
-          "heights": "GBLHz0ayRkVUlms1wHDaJq",
-          "ranges": "9rohAG49drWZs9tew4rDef"
-        }
-      ]
-    },
-    "layerF": {
-      "data": [
-        {
-          "type": "XYZABC",
-          "name": "Unterschrank 60cm"
-        }
-      ]
-    },
-    "layerG": {
-      "data": [
-        {
-          "type": "XYZABC",
-          "name": "Base Cabinet 23.5"
-        }
-      ]
-    }
-  }''';
-
-  const exampleJsonWithHashes = '''{
-    "layerA": {
-      "data": [
-        {
-          "w": 600,
-          "w1": 100,
-          "_hash": "ajRQhCx6QLPI8227B72r8I"
-        },
-        {
-          "w": 700,
-          "w1": 100,
-          "_hash": "Jf177UAntzI4rIjKiU_MVt"
-        }
-      ],
-      "_hash": "qCgcNNF3wJPfx0rkRDfoSY"
-    },
-    "layerB": {
-      "data": [
-        {
-          "d": 268,
-          "d1": 100,
-          "_hash": "9mJ7aZJexhfz8IfwF6bsuW"
-        }
-      ],
-      "_hash": "tb0ffNF2ePpqsRxmvMDRrt"
-    },
-    "layerC": {
-      "data": [
-        {
-          "h": 800,
-          "_hash": "KvMHhk1dYYQ2o5Srt6pTUN"
-        }
-      ],
-      "_hash": "Z4km_FzQoxyck-YHQDZMtV"
-    },
-    "layerD": {
-      "data": [
-        {
-          "wMin": 0,
-          "wMax": 900,
-          "w1Min": 0,
-          "w1Max": 900,
-          "_hash": "6uw0BSIllrk6DuKyvQh-Rg"
-        }
-      ],
-      "_hash": "qFDAzWUsTnqICnpc_rJtax"
-    },
-    "layerE": {
-      "data": [
-        {
-          "type": "XYZABC",
-          "widths": "sLZpHAffgchgJnA++HqKtO",
-          "depths": "k1IL2ctZHw4NpaA34w0d0I",
-          "heights": "GBLHz0ayRkVUlms1wHDaJq",
-          "ranges": "9rohAG49drWZs9tew4rDef",
-          "_hash": "65LigWuYVGgifKnEZaOJET"
-        }
-      ],
-      "_hash": "pDRglh2oWJcghTzzrzTLw6"
-    },
-    "layerF": {
-      "data": [
-        {
-          "type": "XYZABC",
-          "name": "Unterschrank 60cm",
-          "_hash": "gjzETUIUf563ZJNHVEY9Wt"
-        }
-      ],
-      "_hash": "r1u6gR8WLzPAZ3lEsAqREP"
-    },
-    "layerG": {
-      "data": [
-        {
-          "type": "XYZABC",
-          "name": "Base Cabinet 23.5",
-          "_hash": "DEyuShUHDpWSJ7Rq_a3uz6"
-        }
-      ],
-      "_hash": "3meyGs7XhOh8gWFNQFYZDI"
-    },
-    "_hash": "OmmdaqCAhcIKnDm7lT-_gI"
-  }''';
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Allow to configure number ranges, precision
+
 ## [2.0.1] - 2024-11-29
 
 ### Fixed
@@ -64,6 +70,7 @@
 
 - Increase version
 
+[Unreleased]: https://github.com/inlavigo/gg_json_hash/compare/2.0.1...HEAD
 [2.0.1]: https://github.com/inlavigo/gg_json_hash/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/inlavigo/gg_json_hash/compare/1.1.4...2.0.0
 [1.1.4]: https://github.com/inlavigo/gg_json_hash/compare/1.1.3...1.1.4
