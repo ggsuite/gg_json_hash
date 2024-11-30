@@ -31,17 +31,17 @@ Hashing nested JSON objects makes sense for several key reasons:
 
 ## Example
 
-```js
-import 'dart:convert';
+```dart
 import 'package:gg_json_hash/gg_json_hash.dart';
+import 'dart:convert';
 
 void main() {
-  var jh = const JsonHash(floatingPointPrecision: 5);
+  var jh = JsonHash.defaultInstance;
 
   // ...........................................................................
   print('Create a json structure');
 
-  var json = <String, dynamic>{
+  Map<String, dynamic> json = {
     'a': '0',
     'b': '1',
     'child': {
@@ -51,94 +51,81 @@ void main() {
   };
 
   // ...........................................................................
-  print('Add hashes to the json structure');
-  json = jh.applyTo(json);
+  print('Add hashes to the json structure.');
+  json = jh.apply(json);
   print(const JsonEncoder.withIndent('  ').convert(json));
 
   // ...........................................................................
-  print('set a floating point precision to handle rounding differences');
+  print('Set a maximum floating point precision.');
 
-  final json0 = {
-    'a': 1.000001,
-  };
-
-  final json1 = {
-    'a': 1.000002,
-  };
-
-  jh.applyTo(json0);
-  jh.applyTo(json1);
-
-  print(
-    'Both objects have the same hash because difference is below the precision',
+  final config = HashConfig(
+    numberConfig: NumberHashingConfig.defaultConfig.copyWith(precision: 0.001),
   );
-  assert(json0['_hash'] == json1['_hash']); // true
+
+  jh = JsonHash(config: config);
+
+  try {
+    jh.apply({
+      'a': 1.000001,
+    });
+  } catch (e) {
+    print(e.toString()); // Number 1.000001 has a higher precision than 0.001
+  }
 
   // ...........................................................................
-  print('Use the "inPlace" option to modify the input object');
+  print('Use the "inPlace" option to modify the input object directly.');
 
   json = {'a': 1, 'b': 2};
-  jh.applyTo(json, inPlace: true);
+  var ac = ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: true);
+
+  jh.apply(json, applyConfig: ac);
   assert(json['_hash'] == 'QyWM_3g_5wNtikMDP4MK38');
-
-  // ...........................................................................
-  print('Set "recursive: false" to let child hashes untouched.');
-
-  json = {
-    'a': 1,
-    'b': 2,
-    'child': {'_hash': 'ABC123'},
-  };
-  addHashes(json, recursive: false);
-  assert(json['child']['_hash'] == 'ABC123');
-
-  // ...........................................................................
-  print('Set "recursive: true" (default) to recalc child hashes.');
-
-  json = {
-    'a': 1,
-    'b': 2,
-    'child': {'_hash': 'ABC123'},
-  };
-  json = addHashes(json, recursive: true);
-  assert(json['child']['_hash'] == 'RBNvo1WzZ4oRRq0W9-hknp');
 
   // ...........................................................................
   print(
     'Set "upateExistingHashes: false" to create missing hashes but '
-    'not touch existing ones.',
+    'without touching existing ones.',
   );
 
-  json = {
+  json = <String, dynamic>{
     'a': 1,
     'b': 2,
-    'child': {'c': 3},
-    'child2': {'_hash': 'ABC123', 'd': 4},
+    'child': <String, dynamic>{'c': 3},
+    'child2': <String, dynamic>{'_hash': 'ABC123', 'd': 4},
   };
-  jh = const JsonHash(updateExistingHashes: false);
-  json = jh.applyTo(json);
+  ac = ac.copyWith(updateExistingHashes: false);
+
+  json = jh.apply(json, applyConfig: ac);
   assert(json['_hash'] == 'pos6bn6mON0sirhEaXq41-');
   assert(json['child']['_hash'] == 'yrqcsGrHfad4G4u9fgcAxY');
   assert(json['child2']['_hash'] == 'ABC123');
 
   // ...........................................................................
-  print('Use JsonHash class to create a pre configured setup');
-
-  const jsonHash = JsonHash(
-    floatingPointPrecision: 5,
-    recursive: true,
-    updateExistingHashes: false,
-  );
+  print('If existing hashes do not match new ones, an error is thrown.');
+  ac = ac.copyWith(throwIfOnWrongHashes: true);
+  try {
+    jh.apply({'a': 1, '_hash': 'invalid'});
+  } catch (e) {
+    print(e.toString());
+    // 'Hash "invalid" does not match the newly calculated
+    // one "AVq9f1zFei3ZS3WQ8ErYCE". Please make sure that all systems
+    // are producing the same hashes.'
+  }
 
   // ...........................................................................
-  print('Use apply to add hashes to a json object');
-  jsonHash.applyTo(json);
+  print('Set "throwIfOnWrongHashes" to false to replace invalid hashes.');
+  ac = ac.copyWith(
+    throwIfOnWrongHashes: false,
+    updateExistingHashes: true,
+  );
+  json = jh.apply({'a': 1, '_hash': 'invalid'}, applyConfig: ac);
+  print(json['_hash']); // AVq9f1zFei3ZS3WQ8ErYCE
 
   // ...........................................................................
   print('Use validate to check if the hashes are correct');
 
   json = {'a': 1, 'b': 2};
-  json = jh.applyTo(json);
+  json = jh.apply(json);
   jh.validate(json); // true
 
   try {
