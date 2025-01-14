@@ -1,6 +1,6 @@
 name: gg_json_hash
 description: Hashes JSON objects deeply. Good or JSON comparison, sync and more.
-version: 2.0.6
+version: 2.0.7
 repository: https://github.com/inlavigo/gg_json_hash.git
 
 environment:
