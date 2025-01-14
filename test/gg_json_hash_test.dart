@@ -1339,6 +1339,32 @@ void main() {
           });
         });
       });
+
+      group('special cases', () {
+        test('dictionaries with numbers as key', () async {
+          // Load test/broken-hashes-bug.rl.json
+          final json = {
+            '1270537611': 'mxK7Q1zeVB1httPrYsn0ow',
+            '522965': 'PAue6PJ83JBmIqoElcDmot',
+          };
+
+          jh.apply(
+            json,
+            applyConfig: const ApplyJsonHashConfig(
+              updateExistingHashes: true,
+              throwIfOnWrongHashes: false,
+              inPlace: true,
+            ),
+          );
+
+          expect(
+            json['_hash'],
+            equals(
+              'W4CAuZT_tIicr6crbn6LA8',
+            ),
+          );
+        });
+      });
     });
 
     group('NumberHashingConfig', () {

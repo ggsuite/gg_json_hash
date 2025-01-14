@@ -5,6 +5,7 @@
 // found in the LICENSE file in the root of this package.
 
 import 'dart:convert';
+
 import 'package:crypto/crypto.dart';
 
 // .............................................................................
@@ -271,14 +272,7 @@ class JsonHash {
       }
     }
 
-    // Sort the object keys to ensure consistent key order
-    final sortedKeys = objToHash.keys.toList()..sort();
-    final sortedMap = <String, dynamic>{};
-    for (final key in sortedKeys) {
-      sortedMap[key] = objToHash[key];
-    }
-
-    final sortedMapJson = _jsonString(sortedMap);
+    final sortedMapJson = _jsonString(objToHash);
 
     // Compute the SHA-256 hash of the JSON string
     final hash = calcHash(sortedMapJson);
@@ -440,6 +434,9 @@ class JsonHash {
   // ...........................................................................
   /// Converts a map to a JSON string.
   String _jsonString(Map<String, dynamic> map) {
+    // Sort the object keys to ensure consistent key order
+    final sortedKeys = map.keys.toList()..sort();
+
     String encodeValue(dynamic value) {
       if (value is String) {
         return '"${value.replaceAll('"', '\\"')}"'; // Escape quotes
@@ -456,9 +453,17 @@ class JsonHash {
       }
     }
 
-    return '{${map.entries.map(
-          (entry) => '"${entry.key}":'
-              '${encodeValue(entry.value)}',
-        ).join(',')}}';
+    var result = <String>[];
+    result.add('{');
+    for (var i = 0; i < sortedKeys.length; i++) {
+      final key = sortedKeys[i];
+      bool isLast = i == sortedKeys.length - 1;
+      result.add('"$key":'
+          '${encodeValue(map[key])}');
+      if (!isLast) result.add(',');
+    }
+    result.add('}');
+
+    return result.join('');
   }
 }

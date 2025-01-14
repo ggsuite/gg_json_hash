@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.6] - 2025-01-14
+
+- Fixed an issue leading to different hashes compared to the
+  typescript algorithm
+
 ## [2.0.5] - 2024-11-30
 
 ### Changed
