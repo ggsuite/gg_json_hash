@@ -1,9 +1,10 @@
 # Changelog
 
-## [2.0.6] - 2025-01-14
+## [Unreleased]
+
+### Fixed
 
 - Fixed an issue leading to different hashes compared to the
-  typescript algorithm
 
 ## [2.0.5] - 2024-11-30
 
@@ -87,6 +88,7 @@
 
 - Increase version
 
+[Unreleased]: https://github.com/inlavigo/gg_json_hash/compare/2.0.5...HEAD
 [2.0.5]: https://github.com/inlavigo/gg_json_hash/compare/2.0.4...2.0.5
 [2.0.4]: https://github.com/inlavigo/gg_json_hash/compare/2.0.3...2.0.4
 [2.0.3]: https://github.com/inlavigo/gg_json_hash/compare/2.0.1...2.0.3
