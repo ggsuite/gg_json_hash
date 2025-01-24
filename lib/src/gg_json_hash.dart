@@ -136,7 +136,27 @@ class JsonHash {
   }) {
     final copy = applyConfig.inPlace ? json : _copyJson(json);
     _addHashesToObject(copy, applyConfig);
+
+    if (applyConfig.throwIfOnWrongHashes) {
+      validate(copy);
+    }
     return copy;
+  }
+
+  // ...........................................................................
+  /// Writes hashes into the JSON object in place.
+  Map<String, dynamic> applyInPlace(
+    Map<String, dynamic> json, {
+    bool updateExistingHashes = false,
+    bool throwIfWrongHashes = true,
+  }) {
+    final applyConfig = ApplyJsonHashConfig(
+      inPlace: true,
+      updateExistingHashes: updateExistingHashes,
+      throwIfOnWrongHashes: throwIfWrongHashes,
+    );
+
+    return apply(json, applyConfig: applyConfig);
   }
 
   // ...........................................................................
@@ -237,16 +257,17 @@ class JsonHash {
   ) {
     final updateExisting = applyConfig.updateExistingHashes;
     final throwIfOnWrongHashes = applyConfig.throwIfOnWrongHashes;
+    final existingHash = obj['_hash'] as String? ?? '';
 
-    if (!updateExisting && obj.containsKey('_hash')) {
+    if (!updateExisting && existingHash.isNotEmpty == true) {
       return;
     }
 
     // Recursively process child elements
     for (final value in obj.values) {
       if (value is Map<String, dynamic>) {
-        final existingHash = value['_hash'];
-        if (existingHash != null && !updateExisting) {
+        final existingHash = value['_hash'] as String?;
+        if (existingHash?.isNotEmpty == true && !updateExisting) {
           continue;
         }
 
@@ -279,8 +300,8 @@ class JsonHash {
 
     // Throw if old and new hash do not match
     if (throwIfOnWrongHashes) {
-      final oldHash = obj['_hash'];
-      if (oldHash != null && oldHash != hash) {
+      final oldHash = obj['_hash'] as String? ?? '';
+      if (oldHash.isNotEmpty && oldHash != hash) {
         throw Exception(
           'Hash "$oldHash" does not match the newly calculated one "$hash". '
           'Please make sure that all systems are producing the same hashes.',

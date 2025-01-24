@@ -551,14 +551,20 @@ void main() {
           }
 
           test('with all objects having hashes', () {
-            ac = ac.copyWith(updateExistingHashes: false);
+            ac = ac.copyWith(
+              updateExistingHashes: false,
+              throwIfOnWrongHashes: false,
+            );
             jh.apply(json, applyConfig: ac);
             expect(noHashesChanged(), isTrue);
           });
 
           test('with parents have no hashes', () {
             json['a'].remove('_hash');
-            ac = ac.copyWith(updateExistingHashes: false);
+            ac = ac.copyWith(
+              updateExistingHashes: false,
+              throwIfOnWrongHashes: false,
+            );
             jh.apply(json, applyConfig: ac);
             expect(changedHashes(), equals(['a']));
 
@@ -881,6 +887,71 @@ void main() {
         const json = '{"key": "value"}';
         final jsonString = jh.applyToJsonString(json);
         expect(jsonString, '{"key":"value","_hash":"5Dq88zdSRIOcAS-WM_lYYt"}');
+      });
+    });
+
+    group('applyInPlace(json)', () {
+      group('default', () {
+        test('replaces empty hashes with the correct ones', () {
+          final json = {
+            'key': 'value',
+            '_hash': '',
+          };
+
+          jh.applyInPlace(json);
+          expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
+        });
+
+        test('throws when existing hashes are wrong', () {
+          final json = {
+            'key': 'value',
+            '_hash': 'wrongHash',
+          };
+
+          String message = '';
+          try {
+            jh.applyInPlace(json);
+          } catch (e) {
+            message = e.toString();
+          }
+
+          expect(
+            message,
+            equals(
+              'Exception: Hash "wrongHash" is wrong. '
+              'Should be "5Dq88zdSRIOcAS-WM_lYYt".',
+            ),
+          );
+        });
+
+        group('special cases', () {
+          test('with a simple json', () {
+            jh.applyInPlace({
+              'name': 'Set width of UE to 1111',
+              'filter': {
+                'columnFilters': [
+                  {
+                    'type': 'string',
+                    'column': 'articleType',
+                    'operator': 'startsWith',
+                    'search': 'UE',
+                    '_hash': '',
+                  },
+                ],
+                'operator': 'and',
+                '_hash': '',
+              },
+              'actions': [
+                {
+                  'column': 'w',
+                  'setValue': 1111,
+                  '_hash': '',
+                },
+              ],
+              '_hash': '',
+            });
+          });
+        });
       });
     });
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.7] - 2025-01-24
+
+### Changed
+
+- Empty hashes are treated as no hashes now.
+
 ## [2.0.6] - 2025-01-14
 
 ### Fixed
@@ -88,6 +94,7 @@
 
 - Increase version
 
+[2.0.7]: https://github.com/inlavigo/gg_json_hash/compare/2.0.6...2.0.7
 [2.0.6]: https://github.com/inlavigo/gg_json_hash/compare/2.0.5...2.0.6
 [2.0.5]: https://github.com/inlavigo/gg_json_hash/compare/2.0.4...2.0.5
 [2.0.4]: https://github.com/inlavigo/gg_json_hash/compare/2.0.3...2.0.4
