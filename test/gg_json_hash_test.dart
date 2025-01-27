@@ -208,6 +208,27 @@ void main() {
               expect(json['_hash'], equals(expectedHash));
               expect(json['_hash'], equals('dNkCrIe79x2dPyf5fywwYO'));
             });
+
+            test(
+              'with a null value',
+              () {
+                final json = jh.apply({'key': null, '_hash': ''});
+                expect(json['key'], null);
+                final expectedHash = jh.calcHash('{"key":null}');
+                expect(json['_hash'], expectedHash);
+                expect(json['_hash'], 'BZwS6bAVtKxSW0AW5y8ANk');
+              },
+            );
+
+            test('with an array with null values', () {
+              final json = jh.apply({
+                'key': [1, 2, null, 3],
+              });
+              expect(json['key'], equals([1, 2, null, 3]));
+              final expectedHash = jh.calcHash('{"key":[1,2,null,3]}');
+              expect(json['_hash'], equals(expectedHash));
+              expect(json['_hash'], equals('TJBZ_lVlkDw6WlF8esM0I5'));
+            });
           });
 
           test('existing _hash should be overwritten', () {

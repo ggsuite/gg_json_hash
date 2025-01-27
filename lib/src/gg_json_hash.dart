@@ -290,7 +290,14 @@ class JsonHash {
         objToHash[key] = _flattenList(value);
       } else if (_isBasicType(value)) {
         objToHash[key] = _convertBasicType(value);
+      } else if (value == null) {
+        objToHash[key] = null;
       }
+      // coverage:ignore-start
+      else {
+        throw Exception('Unsupported type: ${value.runtimeType}');
+      }
+      // coverage:ignore-end
     }
 
     final sortedMapJson = _jsonString(objToHash);
@@ -346,7 +353,14 @@ class JsonHash {
         flattenedList.add(_flattenList(element));
       } else if (_isBasicType(element)) {
         flattenedList.add(_convertBasicType(element));
+      } else if (element == null) {
+        flattenedList.add(null);
       }
+      // coverage:ignore-start
+      else {
+        throw Exception('Unsupported type: ${element.runtimeType}');
+      }
+      // coverage:ignore-end
     }
 
     return flattenedList;
@@ -376,6 +390,8 @@ class JsonHash {
         copy[key] = value;
       } else if (value is Map<String, dynamic>) {
         copy[key] = _copyJson(value);
+      } else if (value == null) {
+        copy[key] = null;
       } else {
         throw Exception('Unsupported type: ${value.runtimeType}');
       }
@@ -394,6 +410,8 @@ class JsonHash {
         copy.add(element);
       } else if (element is Map<String, dynamic>) {
         copy.add(_copyJson(element));
+      } else if (element == null) {
+        copy.add(null);
       } else {
         throw Exception('Unsupported type: ${element.runtimeType}');
       }
@@ -469,6 +487,8 @@ class JsonHash {
         return '[${value.map(encodeValue).join(',')}]';
       } else if (value is Map<String, dynamic>) {
         return _jsonString(value);
+      } else if (value == null) {
+        return 'null';
       } else {
         throw Exception('Unsupported type: ${value.runtimeType}');
       }

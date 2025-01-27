@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.8] - 2025-01-27
+
+### Fixed
+
+- Fix: null values in json values lead to errors
+
 ## [2.0.7] - 2025-01-24
 
 ### Changed
@@ -94,6 +100,7 @@
 
 - Increase version
 
+[2.0.8]: https://github.com/inlavigo/gg_json_hash/compare/2.0.7...2.0.8
 [2.0.7]: https://github.com/inlavigo/gg_json_hash/compare/2.0.6...2.0.7
 [2.0.6]: https://github.com/inlavigo/gg_json_hash/compare/2.0.5...2.0.6
 [2.0.5]: https://github.com/inlavigo/gg_json_hash/compare/2.0.4...2.0.5
