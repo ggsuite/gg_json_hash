@@ -41,7 +41,7 @@ class JsonInfo {
   // ...........................................................................
   void _init() {
     _initHashToObjects(json);
-    _initIsReferencedBy(json);
+    _initDependencies(json);
   }
 
   // ...........................................................................
@@ -84,7 +84,7 @@ class JsonInfo {
     }
   }
 
-  void _initIsReferencedBy(Map<String, dynamic> json) {
+  void _initDependencies(Map<String, dynamic> json) {
     for (final object in allObjects) {
       for (final key in object.keys) {
         final value = object[key];
