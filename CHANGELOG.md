@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Add hip and hsh als shorthands for JsonHash.defaultInstance.applyInPlace and JsonHash.defaultInstance.apply
+
 ## [2.0.8] - 2025-01-27
 
 ### Fixed
@@ -100,6 +106,7 @@
 
 - Increase version
 
+[Unreleased]: https://github.com/inlavigo/gg_json_hash/compare/2.0.8...HEAD
 [2.0.8]: https://github.com/inlavigo/gg_json_hash/compare/2.0.7...2.0.8
 [2.0.7]: https://github.com/inlavigo/gg_json_hash/compare/2.0.6...2.0.7
 [2.0.6]: https://github.com/inlavigo/gg_json_hash/compare/2.0.5...2.0.6

@@ -1483,4 +1483,29 @@ void main() {
       });
     });
   });
+
+  group('hip', () {
+    test('Applies hashes in place', () {
+      final json = {
+        'key': 'value',
+        '_hash': '',
+      };
+
+      hip(json);
+      expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
+    });
+  });
+
+  group('hsh', () {
+    test('Returns an object with hahes', () {
+      final json = {
+        'key': 'value',
+        '_hash': '',
+      };
+
+      final result = hsh(json);
+      expect(result, isA<Map<String, dynamic>>());
+      expect(result['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
+    });
+  });
 }

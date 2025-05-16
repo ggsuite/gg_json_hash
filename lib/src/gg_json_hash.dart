@@ -508,3 +508,9 @@ class JsonHash {
     return result.join('');
   }
 }
+
+/// Shorthand for applying hashes in place
+final hip = JsonHash.defaultInstance.applyInPlace;
+
+/// Shorthand for applying hashes
+final hsh = JsonHash.defaultInstance.apply;
