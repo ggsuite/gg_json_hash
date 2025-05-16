@@ -29,10 +29,10 @@ class JsonInfo {
   final Map<String, Map<String, dynamic>> hashToObjects = {};
 
   /// Assigns to each hash hashes that are referenced by the hash
-  final Map<String, List<String>> dependents = {};
+  final Map<String, List<String>> refDependents = {};
 
   /// Assigns to each object hash a list of dependencies
-  final Map<String, List<String>> dependencies = {};
+  final Map<String, List<String>> refDependencies = {};
 
   // ######################
   // Private
@@ -41,13 +41,12 @@ class JsonInfo {
   // ...........................................................................
   void _init() {
     _initHashToObjects(json);
-    _initDependencies(json);
+    _initDependencies();
   }
 
   // ...........................................................................
   void _initHashToObjects(Map<String, dynamic> json) {
     var hash = json['_hash'] as String?;
-    allObjects.add(json);
 
     // Make sure every object has an hash
     if (hash == null) {
@@ -60,6 +59,8 @@ class JsonInfo {
       );
       hash = json['_hash'] as String;
     }
+
+    allObjects.add(json);
 
     hashToObjects[hash] = json;
 
@@ -84,50 +85,59 @@ class JsonInfo {
     }
   }
 
-  void _initDependencies(Map<String, dynamic> json) {
-    for (final object in allObjects) {
-      for (final key in object.keys) {
-        final value = object[key];
+  void _initDependencies() {
+    for (final parentObject in allObjects) {
+      final parentHash = parentObject['_hash'] as String;
 
-        if (value is String && key != '_hash') {
-          _processString(value, object);
-        } else if (value is List) {
-          _processList(value, object);
-        }
+      for (final key in parentObject.keys) {
+        final childValue = parentObject[key];
+
+        if (childValue is String && key != '_hash') {
+          _processStringValue(childValue, parentHash);
+        } else if (childValue is List) {
+          _processList(childValue, parentObject);
+        } /*else if (childValue is Map<String, dynamic>) {
+          final childHash = childValue['_hash'] as String;
+          _writeDependency(parentHash, childHash);
+        }*/
       }
     }
   }
 
   void _processList(List<dynamic> value, Map<String, dynamic> object) {
+    final parentHash = object['_hash'] as String;
+
     for (final item in value) {
       if (item is String) {
-        _processString(item, object);
+        _processStringValue(item, parentHash);
       } else if (item is List) {
         _processList(item, object);
       }
     }
   }
 
-  void _processString(String value, Map<String, dynamic> object) {
-    final hash = object['_hash'] as String;
-
-    if (hashToObjects.containsKey(value)) {
-      // Update dependents
-      var a = dependents[value];
-      if (a == null) {
-        a = <String>[];
-        dependents[value] = a;
-      }
-
-      a.add(hash);
-
-      // Update dependencies
-      var b = dependencies[hash];
-      if (b == null) {
-        b = <String>[];
-        dependencies[hash] = b;
-      }
-      b.add(value);
+  void _processStringValue(String childValue, String parentHash) {
+    if (hashToObjects.containsKey(childValue)) {
+      _writeDependency(parentHash, childValue);
     }
+  }
+
+  void _writeDependency(String parentHash, String childHash) {
+    // Update dependents
+    var a = refDependents[childHash];
+    if (a == null) {
+      a = <String>[];
+      refDependents[childHash] = a;
+    }
+
+    a.add(parentHash);
+
+    // Update dependencies
+    var b = refDependencies[parentHash];
+    if (b == null) {
+      b = <String>[];
+      refDependencies[parentHash] = b;
+    }
+    b.add(childHash);
   }
 }

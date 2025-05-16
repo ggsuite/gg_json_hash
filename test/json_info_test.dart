@@ -180,12 +180,16 @@ void main() {
         });
       });
 
-      group('dependents, dependencies', () {
+      group('refDependents, refDependencies', () {
         group('returns a list of objects that reference to a given hash', () {
           test('when the json contains no references', () {
             init();
-            expect(fixHashes0.dependents, <String, List<String>>{});
-            expect(fixHashes1.dependents, <String, List<String>>{});
+            expect(fixHashes0.refDependents, <String, List<String>>{});
+            expect(fixHashes0.refDependencies, <String, List<String>>{});
+
+            expect(fixHashes1.refDependents, <String, dynamic>{});
+
+            expect(fixHashes1.refDependencies, <String, dynamic>{});
           });
           test('when the object references itself', () {
             const json = {
@@ -198,14 +202,14 @@ void main() {
             );
 
             expect(
-              fixHashes.dependents,
+              fixHashes.refDependents,
               {
                 'ROOT': ['ROOT'],
               },
             );
 
             expect(
-              fixHashes.dependencies,
+              fixHashes.refDependencies,
               {
                 'ROOT': ['ROOT'],
               },
@@ -226,14 +230,14 @@ void main() {
             );
 
             expect(
-              fixHashes.dependents,
+              fixHashes.refDependents,
               {
                 'ROOT': ['CHILD'],
               },
             );
 
             expect(
-              fixHashes.dependencies,
+              fixHashes.refDependencies,
               {
                 'CHILD': ['ROOT'],
               },
@@ -257,14 +261,14 @@ void main() {
             );
 
             expect(
-              fixHashes.dependents,
+              fixHashes.refDependents,
               {
                 'CHILD1': ['CHILD0'],
               },
             );
 
             expect(
-              fixHashes.dependencies,
+              fixHashes.refDependencies,
               {
                 'CHILD0': ['CHILD1'],
               },
@@ -283,7 +287,7 @@ void main() {
               );
 
               expect(
-                fixHashes.dependents,
+                fixHashes.refDependents,
                 {
                   'ROOT': ['ROOT'],
                 },
@@ -306,14 +310,14 @@ void main() {
               );
 
               expect(
-                fixHashes.dependents,
+                fixHashes.refDependents,
                 {
                   'ROOT': ['CHILD'],
                 },
               );
 
               expect(
-                fixHashes.dependencies,
+                fixHashes.refDependencies,
                 {
                   'CHILD': ['ROOT'],
                 },
@@ -338,14 +342,14 @@ void main() {
               );
 
               expect(
-                fixHashes.dependents,
+                fixHashes.refDependents,
                 {
                   'ROOT': ['CHILD1'],
                 },
               );
 
               expect(
-                fixHashes.dependencies,
+                fixHashes.refDependencies,
                 {
                   'CHILD1': ['ROOT'],
                 },
