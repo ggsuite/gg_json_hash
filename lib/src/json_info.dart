@@ -29,7 +29,10 @@ class JsonInfo {
   final Map<String, Map<String, dynamic>> hashToObjects = {};
 
   /// Assigns to each hash hashes that are referenced by the hash
-  final Map<String, List<Map<String, dynamic>>> isReferencedBy = {};
+  final Map<String, List<String>> dependents = {};
+
+  /// Assigns to each object hash a list of dependencies
+  final Map<String, List<String>> dependencies = {};
 
   // ######################
   // Private
@@ -106,14 +109,25 @@ class JsonInfo {
   }
 
   void _processString(String value, Map<String, dynamic> object) {
+    final hash = object['_hash'] as String;
+
     if (hashToObjects.containsKey(value)) {
-      var array = isReferencedBy[value];
-      if (array == null) {
-        array = <Map<String, dynamic>>[];
-        isReferencedBy[value] = array;
+      // Update dependents
+      var a = dependents[value];
+      if (a == null) {
+        a = <String>[];
+        dependents[value] = a;
       }
 
-      array.add(object);
+      a.add(hash);
+
+      // Update dependencies
+      var b = dependencies[hash];
+      if (b == null) {
+        b = <String>[];
+        dependencies[hash] = b;
+      }
+      b.add(value);
     }
   }
 }

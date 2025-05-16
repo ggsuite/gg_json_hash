@@ -180,12 +180,12 @@ void main() {
         });
       });
 
-      group('isReferencedBy', () {
+      group('dependents, dependencies', () {
         group('returns a list of objects that reference to a given hash', () {
           test('when the json contains no references', () {
             init();
-            expect(fixHashes0.isReferencedBy, <String, List<String>>{});
-            expect(fixHashes1.isReferencedBy, <String, List<String>>{});
+            expect(fixHashes0.dependents, <String, List<String>>{});
+            expect(fixHashes1.dependents, <String, List<String>>{});
           });
           test('when the object references itself', () {
             const json = {
@@ -198,9 +198,16 @@ void main() {
             );
 
             expect(
-              fixHashes.isReferencedBy,
+              fixHashes.dependents,
               {
-                'ROOT': [json],
+                'ROOT': ['ROOT'],
+              },
+            );
+
+            expect(
+              fixHashes.dependencies,
+              {
+                'ROOT': ['ROOT'],
               },
             );
           });
@@ -219,9 +226,16 @@ void main() {
             );
 
             expect(
-              fixHashes.isReferencedBy,
+              fixHashes.dependents,
               {
-                'ROOT': [json['child']],
+                'ROOT': ['CHILD'],
+              },
+            );
+
+            expect(
+              fixHashes.dependencies,
+              {
+                'CHILD': ['ROOT'],
               },
             );
           });
@@ -243,9 +257,16 @@ void main() {
             );
 
             expect(
-              fixHashes.isReferencedBy,
+              fixHashes.dependents,
               {
-                'CHILD1': [json['child0']],
+                'CHILD1': ['CHILD0'],
+              },
+            );
+
+            expect(
+              fixHashes.dependencies,
+              {
+                'CHILD0': ['CHILD1'],
               },
             );
           });
@@ -262,9 +283,9 @@ void main() {
               );
 
               expect(
-                fixHashes.isReferencedBy,
+                fixHashes.dependents,
                 {
-                  'ROOT': [json],
+                  'ROOT': ['ROOT'],
                 },
               );
             });
@@ -285,30 +306,31 @@ void main() {
               );
 
               expect(
-                fixHashes.isReferencedBy,
+                fixHashes.dependents,
                 {
-                  'ROOT': [(json['list']! as List)[0]],
+                  'ROOT': ['CHILD'],
+                },
+              );
+
+              expect(
+                fixHashes.dependencies,
+                {
+                  'CHILD': ['ROOT'],
                 },
               );
             });
 
             test('in a list', () {
-              const childListItem = {
-                '_hash': 'CHILD1',
-                'ref': 'ROOT',
-              };
-
-              const childList = [
-                childListItem,
-              ];
-
-              const list = [
-                childList,
-              ];
-
               const root = {
                 '_hash': 'ROOT',
-                'list': list,
+                'list': [
+                  [
+                    {
+                      '_hash': 'CHILD1',
+                      'ref': 'ROOT',
+                    },
+                  ],
+                ],
               };
 
               final fixHashes = JsonInfo(
@@ -316,9 +338,16 @@ void main() {
               );
 
               expect(
-                fixHashes.isReferencedBy,
+                fixHashes.dependents,
                 {
-                  'ROOT': [childListItem],
+                  'ROOT': ['CHILD1'],
+                },
+              );
+
+              expect(
+                fixHashes.dependencies,
+                {
+                  'CHILD1': ['ROOT'],
                 },
               );
             });
