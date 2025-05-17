@@ -976,95 +976,95 @@ void main() {
       });
     });
 
-    group('private methods', () {
-      group('_copyJson', () {
-        const copyJson = JsonHash.testCopyJson;
+    group('copyJson', () {
+      const copyJson = JsonHash.copyJson;
 
-        test('empty json', () {
-          expect(copyJson({}), <String, dynamic>{});
-        });
+      test('empty json', () {
+        expect(copyJson({}), <String, dynamic>{});
+      });
 
-        test('simple value', () {
-          expect(copyJson({'a': 1}), {'a': 1});
-        });
+      test('simple value', () {
+        expect(copyJson({'a': 1}), {'a': 1});
+      });
 
-        test('nested value', () {
-          expect(
-              copyJson({
-                'a': {'b': 1},
-              }),
-              {
-                'a': {'b': 1},
-              });
-        });
-
-        test('list value', () {
-          expect(
-              copyJson({
-                'a': [1, 2],
-              }),
-              {
-                'a': [1, 2],
-              });
-        });
-
-        test('list with list', () {
-          expect(
-              copyJson({
-                'a': [
-                  [1, 2],
-                ],
-              }),
-              {
-                'a': [
-                  [1, 2],
-                ],
-              });
-        });
-
-        test('list with map', () {
-          expect(
-              copyJson({
-                'a': [
-                  {'b': 1},
-                ],
-              }),
-              {
-                'a': [
-                  {'b': 1},
-                ],
-              });
-        });
-
-        group('throws', () {
-          group('on unsupported type', () {
-            test('in map', () {
-              String? message;
-              try {
-                copyJson({'a': Error()});
-              } catch (e) {
-                message = e.toString();
-              }
-
-              expect(message, 'Exception: Unsupported type: Error');
+      test('nested value', () {
+        expect(
+            copyJson({
+              'a': {'b': 1},
+            }),
+            {
+              'a': {'b': 1},
             });
+      });
 
-            test('in list', () {
-              String? message;
-              try {
-                copyJson({
-                  'a': [Error()],
-                });
-              } catch (e) {
-                message = e.toString();
-              }
-
-              expect(message, 'Exception: Unsupported type: Error');
+      test('list value', () {
+        expect(
+            copyJson({
+              'a': [1, 2],
+            }),
+            {
+              'a': [1, 2],
             });
+      });
+
+      test('list with list', () {
+        expect(
+            copyJson({
+              'a': [
+                [1, 2],
+              ],
+            }),
+            {
+              'a': [
+                [1, 2],
+              ],
+            });
+      });
+
+      test('list with map', () {
+        expect(
+            copyJson({
+              'a': [
+                {'b': 1},
+              ],
+            }),
+            {
+              'a': [
+                {'b': 1},
+              ],
+            });
+      });
+
+      group('throws', () {
+        group('on unsupported type', () {
+          test('in map', () {
+            String? message;
+            try {
+              copyJson({'a': Error()});
+            } catch (e) {
+              message = e.toString();
+            }
+
+            expect(message, 'Exception: Unsupported type: Error');
+          });
+
+          test('in list', () {
+            String? message;
+            try {
+              copyJson({
+                'a': [Error()],
+              });
+            } catch (e) {
+              message = e.toString();
+            }
+
+            expect(message, 'Exception: Unsupported type: Error');
           });
         });
       });
+    });
 
+    group('private methods', () {
       group('_isBasicType', () {
         const isBasicType = JsonHash.testIsBasicType;
 

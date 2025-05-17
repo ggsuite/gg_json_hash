@@ -14,13 +14,8 @@ class JsonInfo {
     _init();
   }
 
-  /// The json to be fixed
+  /// The json to be analyzed
   final Map<String, dynamic> json;
-
-  /// The fixed json
-  Map<String, dynamic> get fixedJson {
-    return json;
-  }
 
   // ...........................................................................
   /// A list of all objects
@@ -44,6 +39,13 @@ class JsonInfo {
   /// Assigns to each hash parent that depend on the child
   final Map<String, List<String>> childDependents = {};
 
+  /// Assigns hashes of objects to hashes of objects that are
+  /// referenced by the hash
+  final Map<String, List<String>> allDependencies = {};
+
+  /// Assigns hashes of objects to hashes of objects that refer to the object
+  final Map<String, List<String>> allDependents = {};
+
   // ######################
   // Private
   // ######################
@@ -55,6 +57,7 @@ class JsonInfo {
     _initAllHashes();
     _initRefDependencies();
     _initChildDependencies(json);
+    _initAllDependencies();
   }
 
   // ...........................................................................
@@ -176,17 +179,11 @@ class JsonInfo {
   }
 
   // ...........................................................................
-  void _initChildDependencies(dynamic json) {
+  void _initChildDependencies(Map<String, dynamic> json) {
     final parentHash = json['_hash'] as String;
 
-    if (json is Map<String, dynamic>) {
-      for (final entry in json.entries) {
-        _initSubChildDependencies(parentHash, entry.value);
-      }
-    } else if (json is List) {
-      for (final item in json) {
-        _initSubChildDependencies(parentHash, item);
-      }
+    for (final entry in json.entries) {
+      _initSubChildDependencies(parentHash, entry.value);
     }
   }
 
@@ -232,5 +229,25 @@ class JsonInfo {
       childDependencies[parentHash] = b;
     }
     b.add(childHash);
+  }
+
+  // ...........................................................................
+  void _initAllDependencies() {
+    for (final hash in allHashes) {
+      // Init all dependencies
+      final refDeps = refDependencies[hash] ?? const [];
+      final childDeps = childDependencies[hash] ?? const [];
+
+      if (refDeps.isNotEmpty || childDeps.isNotEmpty) {
+        allDependencies[hash] = {...refDeps, ...childDeps}.toList();
+      }
+
+      // Init all dependents
+      final refDeps2 = refDependents[hash] ?? const [];
+      final childDeps2 = childDependents[hash] ?? const [];
+      if (refDeps2.isNotEmpty || childDeps2.isNotEmpty) {
+        allDependents[hash] = {...refDeps2, ...childDeps2}.toList();
+      }
+    }
   }
 }
