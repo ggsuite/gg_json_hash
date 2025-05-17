@@ -28,10 +28,9 @@ void main() {
             },
           };
 
-          final updateHashes = UpdateHashes(json: json);
           var message = '';
           try {
-            updateHashes.apply();
+            uh(json);
           } catch (e) {
             message = e.toString();
           }
@@ -83,10 +82,7 @@ void main() {
             '_hash': 'ROOT',
           };
 
-          final updateHashes = UpdateHashes(json: json);
-          updateHashes.apply();
-
-          final uj = updateHashes.updatedJson;
+          final uj = uh(json);
 
           expect(uj, {'_hash': 'RBNvo1WzZ4oRRq0W9-hknp'});
         });

@@ -118,3 +118,13 @@ class UpdateHashes {
     updatedJson = newRoot;
   }
 }
+
+/// Updates the hashes in a given Json structure as well their usages
+Map<String, dynamic> updateHashes(Map<String, dynamic> json) {
+  final updater = UpdateHashes(json: json);
+  updater.apply();
+  return updater.updatedJson;
+}
+
+/// Shortcut for [updateHashes]
+const uh = updateHashes;
