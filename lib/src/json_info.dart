@@ -9,7 +9,8 @@ import 'package:gg_json_hash/gg_json_hash.dart';
 /// Fixes hashes in a given Json structure
 class JsonInfo {
   /// Constructor
-  JsonInfo({required this.json}) {
+  JsonInfo({required Map<String, dynamic> json})
+      : json = JsonHash.copyJson(json) {
     _init();
   }
 
@@ -49,30 +50,38 @@ class JsonInfo {
 
   // ...........................................................................
   void _init() {
+    _addMissingHashes(json);
     _initHashToObjects(json);
     _initAllHashes();
     _initRefDependencies();
-    _initChildDependencies();
+    _initChildDependencies(json);
+  }
+
+  // ...........................................................................
+  void _addMissingHashes(dynamic json) {
+    if (json is Map<String, dynamic>) {
+      for (final entry in json.entries) {
+        _addMissingHashes(entry.value);
+      }
+
+      if (json['_hash'] == null) {
+        json = hip(
+          json,
+          throwIfWrongHashes: false,
+          updateExistingHashes: false,
+        );
+      }
+    } else if (json is List) {
+      for (final item in json) {
+        _addMissingHashes(item);
+      }
+    }
   }
 
   // ...........................................................................
   void _initHashToObjects(Map<String, dynamic> json) {
-    var hash = json['_hash'] as String?;
-
-    // Make sure every object has an hash
-    if (hash == null) {
-      json = hsh(
-        json,
-        applyConfig: const ApplyJsonHashConfig(
-          throwIfOnWrongHashes: false,
-          updateExistingHashes: false,
-        ),
-      );
-      hash = json['_hash'] as String;
-    }
-
+    var hash = json['_hash'] as String;
     allObjects.add(json);
-
     hashToObjects[hash] = json;
 
     for (final entry in json.entries) {
@@ -167,5 +176,61 @@ class JsonInfo {
   }
 
   // ...........................................................................
-  void _initChildDependencies() {}
+  void _initChildDependencies(dynamic json) {
+    final parentHash = json['_hash'] as String;
+
+    if (json is Map<String, dynamic>) {
+      for (final entry in json.entries) {
+        _initSubChildDependencies(parentHash, entry.value);
+      }
+    } else if (json is List) {
+      for (final item in json) {
+        _initSubChildDependencies(parentHash, item);
+      }
+    }
+  }
+
+  void _initSubChildDependencies(
+    String parentHash,
+    dynamic value,
+  ) {
+    // Process dictionary
+    if (value is Map<String, dynamic>) {
+      final childHash = value['_hash'] as String;
+      _writeChildDependency(parentHash, childHash);
+      for (final subVal in value.values) {
+        _initSubChildDependencies(childHash, subVal);
+      }
+    }
+
+    // Process list
+    else if (value is List) {
+      for (final item in value) {
+        if (item is Map<String, dynamic> || item is List) {
+          _initSubChildDependencies(
+            parentHash,
+            item,
+          );
+        }
+      }
+    }
+  }
+
+  void _writeChildDependency(String parentHash, String childHash) {
+    // Update dependents
+    var a = childDependents[childHash];
+    if (a == null) {
+      a = <String>[];
+      childDependents[childHash] = a;
+    }
+    a.add(parentHash);
+
+    // Update dependencies
+    var b = childDependencies[parentHash];
+    if (b == null) {
+      b = <String>[];
+      childDependencies[parentHash] = b;
+    }
+    b.add(childHash);
+  }
 }

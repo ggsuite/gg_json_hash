@@ -144,6 +144,12 @@ class JsonHash {
   }
 
   // ...........................................................................
+  /// Deeply copies the JSON object.
+  static Map<String, dynamic> copyJson(Map<String, dynamic> json) {
+    return _copyJson(json);
+  }
+
+  // ...........................................................................
   /// Writes hashes into the JSON object in place.
   Map<String, dynamic> applyInPlace(
     Map<String, dynamic> json, {

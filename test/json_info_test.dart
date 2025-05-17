@@ -56,6 +56,23 @@ void main() {
     }
 
     group('json', () {
+      test('returns the original object with added hashes', () {
+        const json = {
+          'child': {
+            'key': 'value',
+          },
+        };
+
+        final fixHashes = JsonInfo(json: json);
+
+        expect(
+          fixHashes.json,
+          {
+            'child': {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
+            '_hash': '3Wizz29YgTIc1LRaN9fNfK',
+          },
+        );
+      });
       test('returns the json to be fixed', () {
         init();
         expect(fixHashes1.json, json1);
@@ -69,7 +86,7 @@ void main() {
           init();
           final json0 = <String, dynamic>{};
           final emptyFixHashes = JsonInfo(json: json0);
-          expect(emptyFixHashes.fixedJson, json0);
+          expect(emptyFixHashes.fixedJson, {'_hash': 'RBNvo1WzZ4oRRq0W9-hknp'});
         });
 
         test('when the json is not empty', () {
@@ -233,15 +250,15 @@ void main() {
         });
       });
 
-      group('refDependents, refDependencies', () {
+      group(
+          'refDependents, refDependencies, childDependencies, childDependents',
+          () {
         group('returns a list of objects that reference to a given hash', () {
           test('when the json contains no references', () {
             init();
             expect(fixHashes0.refDependents, <String, List<String>>{});
             expect(fixHashes0.refDependencies, <String, List<String>>{});
-
             expect(fixHashes1.refDependents, <String, dynamic>{});
-
             expect(fixHashes1.refDependencies, <String, dynamic>{});
           });
 
@@ -251,23 +268,24 @@ void main() {
               'ref': 'ROOT',
             };
 
-            final fixHashes = JsonInfo(
-              json: json,
-            );
+            final fh = JsonInfo(json: json);
 
             expect(
-              fixHashes.refDependents,
+              fh.refDependents,
               {
                 'ROOT': ['ROOT'],
               },
             );
 
             expect(
-              fixHashes.refDependencies,
+              fh.refDependencies,
               {
                 'ROOT': ['ROOT'],
               },
             );
+
+            expect(fh.childDependencies, <String, List<String>>{});
+            expect(fh.childDependents, <String, List<String>>{});
           });
 
           test('when the object is references by a child object', () {
@@ -279,23 +297,23 @@ void main() {
               },
             };
 
-            final fixHashes = JsonInfo(
-              json: json,
-            );
+            final fh = JsonInfo(json: json);
 
-            expect(
-              fixHashes.refDependents,
-              {
-                'ROOT': ['CHILD'],
-              },
-            );
+            expect(fh.refDependents, {
+              'ROOT': ['CHILD'],
+            });
 
-            expect(
-              fixHashes.refDependencies,
-              {
-                'CHILD': ['ROOT'],
-              },
-            );
+            expect(fh.refDependencies, {
+              'CHILD': ['ROOT'],
+            });
+
+            expect(fh.childDependencies, {
+              'ROOT': ['CHILD'],
+            });
+
+            expect(fh.childDependents, {
+              'CHILD': ['ROOT'],
+            });
           });
 
           test('when the object is references by a sibling object', () {
@@ -325,6 +343,20 @@ void main() {
               fixHashes.refDependencies,
               {
                 'CHILD0': ['CHILD1'],
+              },
+            );
+
+            expect(
+              fixHashes.childDependencies,
+              {
+                'ROOT': ['CHILD0', 'CHILD1'],
+              },
+            );
+            expect(
+              fixHashes.childDependents,
+              {
+                'CHILD0': ['ROOT'],
+                'CHILD1': ['ROOT'],
               },
             );
           });
@@ -376,6 +408,20 @@ void main() {
                   'CHILD': ['ROOT'],
                 },
               );
+
+              expect(
+                fixHashes.childDependencies,
+                {
+                  'ROOT': ['CHILD'],
+                },
+              );
+
+              expect(
+                fixHashes.childDependents,
+                {
+                  'CHILD': ['ROOT'],
+                },
+              );
             });
 
             test('in a list', () {
@@ -404,6 +450,19 @@ void main() {
 
               expect(
                 fixHashes.refDependencies,
+                {
+                  'CHILD1': ['ROOT'],
+                },
+              );
+
+              expect(
+                fixHashes.childDependencies,
+                {
+                  'ROOT': ['CHILD1'],
+                },
+              );
+              expect(
+                fixHashes.childDependents,
                 {
                   'CHILD1': ['ROOT'],
                 },
@@ -461,6 +520,24 @@ void main() {
                     'REFOBJECT': ['OBJECTA', 'OBJECTB', 'OBJECTC'],
                   },
                 );
+
+                expect(
+                  fixHashes.childDependencies,
+                  {
+                    'ROOT': ['OBJECTA', 'REFOBJECT'],
+                    'OBJECTA': ['OBJECTB'],
+                    'OBJECTB': ['OBJECTC'],
+                  },
+                );
+                expect(
+                  fixHashes.childDependents,
+                  {
+                    'OBJECTA': ['ROOT'],
+                    'OBJECTB': ['OBJECTA'],
+                    'OBJECTC': ['OBJECTB'],
+                    'REFOBJECT': ['ROOT'],
+                  },
+                );
               });
             }
           });
@@ -503,14 +580,26 @@ void main() {
                 'REFMAP': ['OBJECTA', 'OBJECTB', 'OBJECTC'],
               },
             );
-          });
-        });
-      });
 
-      group('childDependencies, childDependents', () {
-        test('with empty objects', () {
-          const json = <String, dynamic>{};
-          final fixHashes = JsonInfo(json: json);
+            expect(
+              fixHashes.childDependencies,
+              {
+                'ROOT': ['OBJECTA', 'REFMAP'],
+                'OBJECTA': ['OBJECTB'],
+                'OBJECTB': ['OBJECTC'],
+              },
+            );
+
+            expect(
+              fixHashes.childDependents,
+              {
+                'OBJECTA': ['ROOT'],
+                'OBJECTB': ['OBJECTA'],
+                'OBJECTC': ['OBJECTB'],
+                'REFMAP': ['ROOT'],
+              },
+            );
+          });
         });
       });
     });
