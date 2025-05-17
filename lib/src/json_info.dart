@@ -50,7 +50,13 @@ class JsonInfo {
   final List<List<String>> circularDependencies = [];
 
   /// Returns a list of hashes in an update order
-  final List<String> updateOrder = [];
+  List<String> get updateOrder {
+    if (_updateOrder == null) {
+      _initUpdateOrder();
+    }
+
+    return _updateOrder!;
+  }
 
   // ######################
   // Private
@@ -65,7 +71,6 @@ class JsonInfo {
     _initChildDependencies(json);
     _initAllDependencies();
     _initCircularDependencies();
-    _initUpdateOrder();
   }
 
   // ...........................................................................
@@ -305,7 +310,13 @@ class JsonInfo {
   }
 
   // ...........................................................................
+  List<String>? _updateOrder;
+
   void _initUpdateOrder() {
+    _throwOnCircularDependencies();
+
+    _updateOrder = [];
+
     final allHashes = this.allHashes.toList();
     final remainingHashes = allHashes.toList();
     for (final hash in allHashes) {
@@ -323,7 +334,21 @@ class JsonInfo {
     for (final d in dependencies) {
       _initSubUpdateOrder(d, remainingHashes);
     }
-    updateOrder.add(hash);
+    _updateOrder!.add(hash);
     remainingHashes.remove(hash);
+  }
+
+  // ...........................................................................
+  void _throwOnCircularDependencies() {
+    if (circularDependencies.isNotEmpty) {
+      final deps = circularDependencies.map((e) => '  - ${e.join(' -> ')}');
+
+      throw Exception(
+        [
+          'Cannot update hashes: Circular dependencies detected:',
+          ...deps,
+        ].join('\n'),
+      );
+    }
   }
 }

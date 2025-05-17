@@ -762,50 +762,118 @@ void main() {
           });
         });
 
-        test('with multiple circular dependencies', () {
-          const json = {
-            '_hash': 'ROOT',
-            'chain0': {
-              'item0': {
-                '_hash': 'ITEM00',
-                'ref': 'ITEM01',
+        group('with multiple circular dependencies', () {
+          test('case 0', () {
+            const json = {
+              '_hash': 'ROOT',
+              'chain0': {
+                'item0': {
+                  '_hash': 'ITEM00',
+                  'ref': 'ITEM01',
+                },
+                'item1': {
+                  '_hash': 'ITEM01',
+                  'ref': 'ITEM02',
+                },
+                'item2': {
+                  '_hash': 'ITEM02',
+                  'ref': 'ITEM00',
+                },
               },
-              'item1': {
-                '_hash': 'ITEM01',
-                'ref': 'ITEM02',
+              'chain1': {
+                'item0': {
+                  '_hash': 'ITEM10',
+                  'ref': 'ITEM11',
+                },
+                'item1': {
+                  '_hash': 'ITEM11',
+                  'ref': 'ITEM12',
+                },
+                'item2': {
+                  '_hash': 'ITEM12',
+                  'ref': 'ITEM10',
+                },
               },
-              'item2': {
-                '_hash': 'ITEM02',
-                'ref': 'ITEM00',
-              },
-            },
-            'chain1': {
-              'item0': {
-                '_hash': 'ITEM10',
-                'ref': 'ITEM11',
-              },
-              'item1': {
-                '_hash': 'ITEM11',
-                'ref': 'ITEM12',
-              },
-              'item2': {
-                '_hash': 'ITEM12',
-                'ref': 'ITEM10',
-              },
-            },
-          };
+            };
 
-          final ji = JsonInfo(json: json);
+            final ji = JsonInfo(json: json);
 
-          expect(ji.circularDependencies, [
-            ['ITEM00', 'ITEM01', 'ITEM02', 'ITEM00'],
-            ['ITEM10', 'ITEM11', 'ITEM12', 'ITEM10'],
-          ]);
+            expect(ji.circularDependencies, [
+              ['ITEM00', 'ITEM01', 'ITEM02', 'ITEM00'],
+              ['ITEM10', 'ITEM11', 'ITEM12', 'ITEM10'],
+            ]);
+          });
+          test('case 1', () {
+            const json = {
+              '_hash': 'ROOT',
+              'child0': {
+                '_hash': 'CHILD0',
+                'ref': 'CHILD1',
+              },
+              'child1': {
+                '_hash': 'CHILD1',
+                'ref': 'CHILD2',
+              },
+              'child2': {
+                '_hash': 'CHILD2',
+                'ref': 'CHILD0',
+              },
+              'child3': {
+                '_hash': 'CHILD3',
+                'ref': 'ROOT',
+              },
+            };
+
+            final ji = JsonInfo(json: json);
+
+            expect(ji.circularDependencies, [
+              ['CHILD0', 'CHILD1', 'CHILD2', 'CHILD0'],
+              ['ROOT', 'CHILD3', 'ROOT'],
+            ]);
+          });
         });
       });
     });
 
     group('updateOrder', () {
+      test('throws on circluar dependencies', () {
+        const json = {
+          '_hash': 'ROOT',
+          'child0': {
+            '_hash': 'CHILD0',
+            'ref': 'CHILD1',
+          },
+          'child1': {
+            '_hash': 'CHILD1',
+            'ref': 'CHILD2',
+          },
+          'child2': {
+            '_hash': 'CHILD2',
+            'ref': 'CHILD0',
+          },
+          'child3': {
+            '_hash': 'CHILD3',
+            'ref': 'ROOT',
+          },
+        };
+
+        final ji = JsonInfo(json: json);
+        var message = '';
+        try {
+          ji.updateOrder;
+        } catch (e) {
+          message = e.toString();
+        }
+        expect(
+          message,
+          [
+            'Exception: Cannot update hashes: Circular dependencies detected:',
+            '  - CHILD0 -> CHILD1 -> CHILD2 -> CHILD0',
+            '  - ROOT -> CHILD3 -> ROOT',
+          ].join('\n'),
+        );
+      });
+
       test('of an empty object', () {
         const json = {'_hash': 'ROOT'};
         final ji = JsonInfo(json: json);
