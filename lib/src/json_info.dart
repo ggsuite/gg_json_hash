@@ -49,6 +49,9 @@ class JsonInfo {
   /// Returns a list of circular dependencies
   final List<List<String>> circularDependencies = [];
 
+  /// Returns a list of hashes in an update order
+  final List<String> updateOrder = [];
+
   // ######################
   // Private
   // ######################
@@ -62,6 +65,7 @@ class JsonInfo {
     _initChildDependencies(json);
     _initAllDependencies();
     _initCircularDependencies();
+    _initUpdateOrder();
   }
 
   // ...........................................................................
@@ -299,4 +303,11 @@ class JsonInfo {
 
     return;
   }
+
+  // ...........................................................................
+  void _initUpdateOrder() {
+    final remainingHashes = allHashes.toList();
+  }
+
+  void _initSubUpdateOrder() {}
 }

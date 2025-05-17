@@ -10,9 +10,9 @@ import 'package:test/test.dart';
 void main() {
   group('FixHashes', () {
     bool isInitialized = false;
-    late final JsonInfo fixHashes0;
-    late final JsonInfo fixHashes1;
-    late final JsonInfo fixHashes2;
+    late final JsonInfo ji0;
+    late final JsonInfo ji1;
+    late final JsonInfo ji2;
 
     const json0 = <String, dynamic>{};
 
@@ -48,9 +48,9 @@ void main() {
       if (isInitialized) {
         return;
       } else {
-        fixHashes0 = JsonInfo(json: json0);
-        fixHashes1 = JsonInfo(json: json1);
-        fixHashes2 = JsonInfo(json: json2);
+        ji0 = JsonInfo(json: json0);
+        ji1 = JsonInfo(json: json1);
+        ji2 = JsonInfo(json: json2);
         isInitialized = true;
       }
     }
@@ -63,10 +63,10 @@ void main() {
           },
         };
 
-        final fixHashes = JsonInfo(json: json);
+        final ji = JsonInfo(json: json);
 
         expect(
-          fixHashes.json,
+          ji.json,
           {
             'child': {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
             '_hash': '3Wizz29YgTIc1LRaN9fNfK',
@@ -75,8 +75,8 @@ void main() {
       });
       test('returns the json to be fixed', () {
         init();
-        expect(fixHashes1.json, json1);
-        expect(fixHashes2.json, json2);
+        expect(ji1.json, json1);
+        expect(ji2.json, json2);
       });
     });
 
@@ -84,7 +84,7 @@ void main() {
       group('returns a list of all objects', () {
         test('for a deeply nested object', () {
           init();
-          final oh = fixHashes1.allObjects.map((e) => e['_hash']).toList();
+          final oh = ji1.allObjects.map((e) => e['_hash']).toList();
           expect(
             oh,
             [
@@ -100,7 +100,7 @@ void main() {
             ],
           );
 
-          expect(fixHashes1.allHashes, [
+          expect(ji1.allHashes, [
             'ROOT',
             'PARENT',
             'CHILD0',
@@ -125,11 +125,11 @@ void main() {
             ],
           };
 
-          final fixHashes = JsonInfo(
+          final ji = JsonInfo(
             json: json,
           );
 
-          final oh = fixHashes.allObjects.map((e) => e['_hash']).toList();
+          final oh = ji.allObjects.map((e) => e['_hash']).toList();
           expect(
             oh,
             [
@@ -139,7 +139,7 @@ void main() {
             ],
           );
 
-          expect(fixHashes.allHashes, [
+          expect(ji.allHashes, [
             'ROOT',
             'CHILD0',
             'CHILD1',
@@ -161,11 +161,11 @@ void main() {
             ],
           };
 
-          final fixHashes = JsonInfo(
+          final ji = JsonInfo(
             json: json,
           );
 
-          final oh = fixHashes.allObjects.map((e) => e['_hash']).toList();
+          final oh = ji.allObjects.map((e) => e['_hash']).toList();
           expect(
             oh,
             [
@@ -175,7 +175,7 @@ void main() {
             ],
           );
 
-          expect(fixHashes.allHashes, [
+          expect(ji.allHashes, [
             'ROOT',
             'CHILD0',
             'CHILD1',
@@ -190,10 +190,10 @@ void main() {
             },
           };
 
-          final fixHashes = JsonInfo(
+          final ji = JsonInfo(
             json: json,
           );
-          final oh = fixHashes.allObjects.map((e) => e['_hash']).toList();
+          final oh = ji.allObjects.map((e) => e['_hash']).toList();
           expect(
             oh,
             [
@@ -204,7 +204,7 @@ void main() {
             ],
           );
 
-          expect(fixHashes.allHashes, [
+          expect(ji.allHashes, [
             'UWPFyflDOcMsNU9Bn4f1LG',
             'Gd576RRXUydlpqqaOWJ2HS',
             'HASH0',
@@ -221,10 +221,10 @@ void main() {
       group('returns a list of objects that reference to a given hash', () {
         test('when the json contains no references', () {
           init();
-          expect(fixHashes0.refDependents, <String, List<String>>{});
-          expect(fixHashes0.refDependencies, <String, List<String>>{});
-          expect(fixHashes1.refDependents, <String, dynamic>{});
-          expect(fixHashes1.refDependencies, <String, dynamic>{});
+          expect(ji0.refDependents, <String, List<String>>{});
+          expect(ji0.refDependencies, <String, List<String>>{});
+          expect(ji1.refDependents, <String, dynamic>{});
+          expect(ji1.refDependencies, <String, dynamic>{});
         });
 
         test('when the object references itself', () {
@@ -321,45 +321,45 @@ void main() {
             },
           };
 
-          final fixHashes = JsonInfo(
+          final ji = JsonInfo(
             json: json,
           );
 
           expect(
-            fixHashes.refDependents,
+            ji.refDependents,
             {
               'CHILD1': ['CHILD0'],
             },
           );
 
           expect(
-            fixHashes.refDependencies,
+            ji.refDependencies,
             {
               'CHILD0': ['CHILD1'],
             },
           );
 
           expect(
-            fixHashes.childDependencies,
+            ji.childDependencies,
             {
               'ROOT': ['CHILD0', 'CHILD1'],
             },
           );
           expect(
-            fixHashes.childDependents,
+            ji.childDependents,
             {
               'CHILD0': ['ROOT'],
               'CHILD1': ['ROOT'],
             },
           );
 
-          expect(fixHashes.allDependents, {
+          expect(ji.allDependents, {
             'CHILD0': ['ROOT'],
             'CHILD1': ['CHILD0', 'ROOT'],
           });
 
           expect(
-            fixHashes.allDependencies,
+            ji.allDependencies,
             {
               'ROOT': ['CHILD0', 'CHILD1'],
               'CHILD0': ['CHILD1'],
@@ -374,31 +374,31 @@ void main() {
               'list': ['ROOT', 'a', 'b'],
             };
 
-            final fixHashes = JsonInfo(
+            final ji = JsonInfo(
               json: json,
             );
 
             expect(
-              fixHashes.refDependents,
+              ji.refDependents,
               {
                 'ROOT': ['ROOT'],
               },
             );
 
             expect(
-              fixHashes.refDependencies,
+              ji.refDependencies,
               {
                 'ROOT': ['ROOT'],
               },
             );
 
             expect(
-              fixHashes.childDependencies,
+              ji.childDependencies,
               <String, dynamic>{},
             );
 
             expect(
-              fixHashes.childDependents,
+              ji.childDependents,
               <String, dynamic>{},
             );
           });
@@ -414,47 +414,47 @@ void main() {
               ],
             };
 
-            final fixHashes = JsonInfo(
+            final ji = JsonInfo(
               json: json,
             );
 
             expect(
-              fixHashes.refDependents,
+              ji.refDependents,
               {
                 'ROOT': ['CHILD'],
               },
             );
 
             expect(
-              fixHashes.refDependencies,
+              ji.refDependencies,
               {
                 'CHILD': ['ROOT'],
               },
             );
 
             expect(
-              fixHashes.childDependents,
+              ji.childDependents,
               {
                 'CHILD': ['ROOT'],
               },
             );
 
             expect(
-              fixHashes.childDependencies,
+              ji.childDependencies,
               {
                 'ROOT': ['CHILD'],
               },
             );
 
             expect(
-              fixHashes.childDependents,
+              ji.childDependents,
               {
                 'CHILD': ['ROOT'],
               },
             );
 
             expect(
-              fixHashes.childDependencies,
+              ji.childDependencies,
               {
                 'ROOT': ['CHILD'],
               },
@@ -474,26 +474,26 @@ void main() {
               ],
             };
 
-            final fixHashes = JsonInfo(
+            final ji = JsonInfo(
               json: root,
             );
 
             expect(
-              fixHashes.refDependents,
+              ji.refDependents,
               {
                 'ROOT': ['CHILD1'],
               },
             );
 
             expect(
-              fixHashes.refDependencies,
+              ji.refDependencies,
               {
                 'CHILD1': ['ROOT'],
               },
             );
 
             expect(
-              fixHashes.allDependents,
+              ji.allDependents,
               {
                 'CHILD1': ['ROOT'],
                 'ROOT': ['CHILD1'],
@@ -501,7 +501,7 @@ void main() {
             );
 
             expect(
-              fixHashes.allDependencies,
+              ji.allDependencies,
               {
                 'ROOT': ['CHILD1'],
                 'CHILD1': ['ROOT'],
@@ -543,10 +543,10 @@ void main() {
                 },
               };
 
-              final fixHashes = JsonInfo(json: json);
+              final ji = JsonInfo(json: json);
 
               expect(
-                fixHashes.refDependents,
+                ji.refDependents,
                 {
                   'OBJECTA': ['REFOBJECT'],
                   'OBJECTB': ['REFOBJECT'],
@@ -555,14 +555,14 @@ void main() {
               );
 
               expect(
-                fixHashes.refDependencies,
+                ji.refDependencies,
                 {
                   'REFOBJECT': ['OBJECTA', 'OBJECTB', 'OBJECTC'],
                 },
               );
 
               expect(
-                fixHashes.childDependencies,
+                ji.childDependencies,
                 {
                   'ROOT': ['OBJECTA', 'REFOBJECT'],
                   'OBJECTA': ['OBJECTB'],
@@ -570,7 +570,7 @@ void main() {
                 },
               );
               expect(
-                fixHashes.childDependents,
+                ji.childDependents,
                 {
                   'OBJECTA': ['ROOT'],
                   'OBJECTB': ['OBJECTA'],
@@ -580,7 +580,7 @@ void main() {
               );
 
               expect(
-                fixHashes.allDependencies,
+                ji.allDependencies,
                 {
                   'ROOT': ['OBJECTA', 'REFOBJECT'],
                   'OBJECTA': ['OBJECTB'],
@@ -589,7 +589,7 @@ void main() {
                 },
               );
               expect(
-                fixHashes.allDependents,
+                ji.allDependents,
                 {
                   'OBJECTA': ['REFOBJECT', 'ROOT'],
                   'OBJECTB': ['REFOBJECT', 'OBJECTA'],
@@ -622,10 +622,10 @@ void main() {
             },
           };
 
-          final fixHashes = JsonInfo(json: json);
+          final ji = JsonInfo(json: json);
 
           expect(
-            fixHashes.refDependents,
+            ji.refDependents,
             {
               'OBJECTA': ['REFMAP'],
               'OBJECTB': ['REFMAP'],
@@ -634,14 +634,14 @@ void main() {
           );
 
           expect(
-            fixHashes.refDependencies,
+            ji.refDependencies,
             {
               'REFMAP': ['OBJECTA', 'OBJECTB', 'OBJECTC'],
             },
           );
 
           expect(
-            fixHashes.childDependencies,
+            ji.childDependencies,
             {
               'ROOT': ['OBJECTA', 'REFMAP'],
               'OBJECTA': ['OBJECTB'],
@@ -650,7 +650,7 @@ void main() {
           );
 
           expect(
-            fixHashes.childDependents,
+            ji.childDependents,
             {
               'OBJECTA': ['ROOT'],
               'OBJECTB': ['OBJECTA'],
@@ -660,7 +660,7 @@ void main() {
           );
 
           expect(
-            fixHashes.allDependencies,
+            ji.allDependencies,
             {
               'ROOT': ['OBJECTA', 'REFMAP'],
               'OBJECTA': ['OBJECTB'],
@@ -670,7 +670,7 @@ void main() {
           );
 
           expect(
-            fixHashes.allDependents,
+            ji.allDependents,
             {
               'OBJECTA': ['REFMAP', 'ROOT'],
               'OBJECTB': ['REFMAP', 'OBJECTA'],
@@ -691,9 +691,9 @@ void main() {
               'ref': 'ROOT',
             };
 
-            final fixHashes = JsonInfo(json: json);
+            final ji = JsonInfo(json: json);
 
-            expect(fixHashes.circularDependencies, [
+            expect(ji.circularDependencies, [
               ['ROOT', 'ROOT'],
             ]);
           });
@@ -707,9 +707,9 @@ void main() {
               },
             };
 
-            final fixHashes = JsonInfo(json: json);
+            final ji = JsonInfo(json: json);
 
-            expect(fixHashes.circularDependencies, [
+            expect(ji.circularDependencies, [
               ['ROOT', 'CHILD', 'ROOT'],
             ]);
           });
@@ -726,9 +726,9 @@ void main() {
               },
             };
 
-            final fixHashes = JsonInfo(json: json);
+            final ji = JsonInfo(json: json);
 
-            expect(fixHashes.circularDependencies, [
+            expect(ji.circularDependencies, [
               ['ROOT', 'CHILD', 'GRANDCHILD', 'ROOT'],
             ]);
           });
@@ -754,9 +754,9 @@ void main() {
               },
             };
 
-            final fixHashes = JsonInfo(json: json);
+            final ji = JsonInfo(json: json);
 
-            expect(fixHashes.circularDependencies, [
+            expect(ji.circularDependencies, [
               ['CHILD0', 'CHILD1', 'GRANDCHILD', 'CHILD0'],
             ]);
           });
@@ -795,13 +795,21 @@ void main() {
             },
           };
 
-          final fixHashes = JsonInfo(json: json);
+          final ji = JsonInfo(json: json);
 
-          expect(fixHashes.circularDependencies, [
+          expect(ji.circularDependencies, [
             ['ITEM00', 'ITEM01', 'ITEM02', 'ITEM00'],
             ['ITEM10', 'ITEM11', 'ITEM12', 'ITEM10'],
           ]);
         });
+      });
+    });
+
+    group('updateOrder', () {
+      test('of an empty object', () {
+        const json = <String, dynamic>{};
+        final ji = JsonInfo(json: json);
+        expect(ji.updateOrder, []);
       });
     });
   });
