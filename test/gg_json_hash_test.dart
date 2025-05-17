@@ -976,95 +976,95 @@ void main() {
       });
     });
 
-    group('private methods', () {
-      group('_copyJson', () {
-        const copyJson = JsonHash.testCopyJson;
+    group('copyJson', () {
+      const copyJson = JsonHash.copyJson;
 
-        test('empty json', () {
-          expect(copyJson({}), <String, dynamic>{});
-        });
+      test('empty json', () {
+        expect(copyJson({}), <String, dynamic>{});
+      });
 
-        test('simple value', () {
-          expect(copyJson({'a': 1}), {'a': 1});
-        });
+      test('simple value', () {
+        expect(copyJson({'a': 1}), {'a': 1});
+      });
 
-        test('nested value', () {
-          expect(
-              copyJson({
-                'a': {'b': 1},
-              }),
-              {
-                'a': {'b': 1},
-              });
-        });
-
-        test('list value', () {
-          expect(
-              copyJson({
-                'a': [1, 2],
-              }),
-              {
-                'a': [1, 2],
-              });
-        });
-
-        test('list with list', () {
-          expect(
-              copyJson({
-                'a': [
-                  [1, 2],
-                ],
-              }),
-              {
-                'a': [
-                  [1, 2],
-                ],
-              });
-        });
-
-        test('list with map', () {
-          expect(
-              copyJson({
-                'a': [
-                  {'b': 1},
-                ],
-              }),
-              {
-                'a': [
-                  {'b': 1},
-                ],
-              });
-        });
-
-        group('throws', () {
-          group('on unsupported type', () {
-            test('in map', () {
-              String? message;
-              try {
-                copyJson({'a': Error()});
-              } catch (e) {
-                message = e.toString();
-              }
-
-              expect(message, 'Exception: Unsupported type: Error');
+      test('nested value', () {
+        expect(
+            copyJson({
+              'a': {'b': 1},
+            }),
+            {
+              'a': {'b': 1},
             });
+      });
 
-            test('in list', () {
-              String? message;
-              try {
-                copyJson({
-                  'a': [Error()],
-                });
-              } catch (e) {
-                message = e.toString();
-              }
-
-              expect(message, 'Exception: Unsupported type: Error');
+      test('list value', () {
+        expect(
+            copyJson({
+              'a': [1, 2],
+            }),
+            {
+              'a': [1, 2],
             });
+      });
+
+      test('list with list', () {
+        expect(
+            copyJson({
+              'a': [
+                [1, 2],
+              ],
+            }),
+            {
+              'a': [
+                [1, 2],
+              ],
+            });
+      });
+
+      test('list with map', () {
+        expect(
+            copyJson({
+              'a': [
+                {'b': 1},
+              ],
+            }),
+            {
+              'a': [
+                {'b': 1},
+              ],
+            });
+      });
+
+      group('throws', () {
+        group('on unsupported type', () {
+          test('in map', () {
+            String? message;
+            try {
+              copyJson({'a': Error()});
+            } catch (e) {
+              message = e.toString();
+            }
+
+            expect(message, 'Exception: Unsupported type: Error');
+          });
+
+          test('in list', () {
+            String? message;
+            try {
+              copyJson({
+                'a': [Error()],
+              });
+            } catch (e) {
+              message = e.toString();
+            }
+
+            expect(message, 'Exception: Unsupported type: Error');
           });
         });
       });
+    });
 
+    group('private methods', () {
       group('_isBasicType', () {
         const isBasicType = JsonHash.testIsBasicType;
 
@@ -1506,6 +1506,111 @@ void main() {
       final result = hsh(json);
       expect(result, isA<Map<String, dynamic>>());
       expect(result['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
+    });
+  });
+
+  group('areEqual', () {
+    group('with ignoreHashes', () {
+      group('== true', () {
+        test('returns true for deeply equal objects ignoring hashes', () {
+          final a = {'x': 1, 'y': 'test', 'z': true, '_hash': 'A'};
+          final b = {'x': 1, 'y': 'test', 'z': true, '_hash': 'B'};
+          expect(JsonHash.areEqual(a, b, ignoreHashes: true), isTrue);
+        });
+      });
+      group('== false', () {
+        test('returns false for different hashes', () {
+          final a = {'x': 1, 'y': 'test', 'z': true, '_hash': 'A'};
+          final b = {'x': 1, 'y': 'test', 'z': true, '_hash': 'B'};
+          expect(JsonHash.areEqual(a, b, ignoreHashes: false), isFalse);
+        });
+      });
+    });
+
+    test('returns true for deeply equal simple maps', () {
+      final a = {'x': 1, 'y': 'test', 'z': true};
+      final b = {'x': 1, 'y': 'test', 'z': true};
+      expect(JsonHash.areEqual(a, b), isTrue);
+    });
+
+    test('returns true for deeply equal nested maps', () {
+      final a = {
+        'a': 1,
+        'b': {
+          'c': 2,
+          'd': [
+            1,
+            2,
+            3,
+            {'x': 4},
+            [5, 6, 7],
+          ],
+        },
+      };
+      final b = {
+        'a': 1,
+        'b': {
+          'c': 2,
+          'd': [
+            1,
+            2,
+            3,
+            {'x': 4},
+            [5, 6, 7],
+          ],
+        },
+      };
+      expect(JsonHash.areEqual(a, b), isTrue);
+    });
+
+    test('returns false for maps with different values', () {
+      final a = {'x': 1, 'y': 'test'};
+      final b = {'x': 2, 'y': 'test'};
+      expect(JsonHash.areEqual(a, b), isFalse);
+    });
+
+    test('returns false for maps with different keys', () {
+      final a = {'x': 1, 'y': 'test'};
+      final b = {'x': 1, 'z': 'test'};
+      expect(JsonHash.areEqual(a, b), isFalse);
+    });
+
+    test('returns false for maps with different nested values', () {
+      final a = {
+        'a': 1,
+        'b': {
+          'c': 2,
+          'd': [1, 2, 3],
+        },
+      };
+      final b = {
+        'a': 1,
+        'b': {
+          'c': 2,
+          'd': [1, 2, 4],
+        },
+      };
+      expect(JsonHash.areEqual(a, b), isFalse);
+    });
+
+    test('returns false for maps with different list lengths', () {
+      final a = {
+        'a': [1, 2, 3],
+      };
+      final b = {
+        'a': [1, 2],
+      };
+      expect(JsonHash.areEqual(a, b), isFalse);
+    });
+
+    test('returns true for empty maps', () {
+      expect(JsonHash.areEqual({}, {}), isTrue);
+    });
+
+    test('returns false for different types in values', () {
+      final a = {'a': 1};
+      final b = {'a': '1'};
+      expect(JsonHash.areEqual(a, b), isFalse);
     });
   });
 }

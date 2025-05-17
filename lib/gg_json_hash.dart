@@ -8,3 +8,4 @@ library;
 
 export 'src/gg_json_hash.dart';
 export 'src/json_info.dart';
+export 'src/update_hashes.dart';

@@ -144,6 +144,21 @@ class JsonHash {
   }
 
   // ...........................................................................
+  /// Deeply copies the JSON object.
+  static Map<String, dynamic> copyJson(Map<String, dynamic> json) {
+    return _copyJson(json);
+  }
+
+  /// Returns true if two JSON objects are deeply equal.
+  static bool areEqual(
+    Map<String, dynamic> a,
+    Map<String, dynamic> b, {
+    bool ignoreHashes = false,
+  }) {
+    return _areEqual(a, b, ignoreHashes: ignoreHashes);
+  }
+
+  // ...........................................................................
   /// Writes hashes into the JSON object in place.
   Map<String, dynamic> applyInPlace(
     Map<String, dynamic> json, {
@@ -376,6 +391,69 @@ class JsonHash {
         _processList(element, applyConfig);
       }
     }
+  }
+
+  // ...........................................................................
+  /// Returns true if two JSON objects are deeply equal
+  static bool _areEqual(
+    Map<String, dynamic> a,
+    Map<String, dynamic> b, {
+    bool ignoreHashes = false,
+  }) {
+    if (a.length != b.length) {
+      return false;
+    }
+
+    for (final key in a.keys) {
+      if (ignoreHashes && key == '_hash') {
+        continue;
+      }
+
+      final valueA = a[key];
+      final valueB = b[key];
+
+      if (valueA is Map<String, dynamic> && valueB is Map<String, dynamic>) {
+        if (!_areEqual(valueA, valueB)) {
+          return false;
+        }
+      } else if (valueA is List && valueB is List) {
+        if (!_areEqualList(valueA, valueB)) {
+          return false;
+        }
+      } else if (valueA != valueB) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  static bool _areEqualList(
+    List<dynamic> a,
+    List<dynamic> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+
+    for (int i = 0; i < a.length; i++) {
+      final valueA = a[i];
+      final valueB = b[i];
+
+      if (valueA is Map<String, dynamic> && valueB is Map<String, dynamic>) {
+        if (!_areEqual(valueA, valueB)) {
+          return false;
+        }
+      } else if (valueA is List && valueB is List) {
+        if (!_areEqualList(valueA, valueB)) {
+          return false;
+        }
+      } else if (valueA != valueB) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   // ...........................................................................

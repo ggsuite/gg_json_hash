@@ -1,10 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Add `JsonInfo` and `UpdateHashes` for retrieving information from hashed Json files and updating hashes after data modification
+
 ## [2.0.9] - 2025-05-16
 
 ### Added
 
-- Add hip and hsh als shorthands for JsonHash.defaultInstance.applyInPlace and JsonHash.defaultInstance.apply
+- Add hip and hsh als shorthands for `JsonHash.defaultInstance.applyInPlace` and `JsonHash.defaultInstance.apply`
 
 ## [2.0.8] - 2025-01-27
 
@@ -106,6 +112,7 @@
 
 - Increase version
 
+[Unreleased]: https://github.com/inlavigo/gg_json_hash/compare/2.0.9...HEAD
 [2.0.9]: https://github.com/inlavigo/gg_json_hash/compare/2.0.8...2.0.9
 [2.0.8]: https://github.com/inlavigo/gg_json_hash/compare/2.0.7...2.0.8
 [2.0.7]: https://github.com/inlavigo/gg_json_hash/compare/2.0.6...2.0.7
