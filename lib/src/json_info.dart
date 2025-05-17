@@ -306,8 +306,24 @@ class JsonInfo {
 
   // ...........................................................................
   void _initUpdateOrder() {
+    final allHashes = this.allHashes.toList();
     final remainingHashes = allHashes.toList();
+    for (final hash in allHashes) {
+      _initSubUpdateOrder(hash, remainingHashes);
+    }
   }
 
-  void _initSubUpdateOrder() {}
+  void _initSubUpdateOrder(String hash, List<String> remainingHashes) {
+    if (!remainingHashes.contains(hash)) {
+      return;
+    }
+
+    final List<String> dependencies = allDependencies[hash] ?? [];
+
+    for (final d in dependencies) {
+      _initSubUpdateOrder(d, remainingHashes);
+    }
+    updateOrder.add(hash);
+    remainingHashes.remove(hash);
+  }
 }

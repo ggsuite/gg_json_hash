@@ -807,9 +807,91 @@ void main() {
 
     group('updateOrder', () {
       test('of an empty object', () {
-        const json = <String, dynamic>{};
+        const json = {'_hash': 'ROOT'};
         final ji = JsonInfo(json: json);
-        expect(ji.updateOrder, []);
+        expect(ji.updateOrder, ['ROOT']);
+      });
+
+      test('of an object with one child object', () {
+        const json = {
+          '_hash': 'ROOT',
+          'child': {'_hash': 'CHILD'},
+        };
+        final ji = JsonInfo(json: json);
+        expect(ji.updateOrder, ['CHILD', 'ROOT']);
+      });
+
+      test('of an object with two children with two grand children', () {
+        const json = {
+          '_hash': 'ROOT',
+          'child0': {
+            '_hash': 'CHILD0',
+            'grand0': {'_hash': 'GRAND0'},
+          },
+          'child1': {
+            '_hash': 'CHILD1',
+            'grand1': {'_hash': 'GRAND1'},
+          },
+        };
+        final ji = JsonInfo(json: json);
+        expect(
+          ji.updateOrder,
+          [
+            'GRAND0',
+            'CHILD0',
+            'GRAND1',
+            'CHILD1',
+            'ROOT',
+          ],
+        );
+      });
+
+      test('of objects within lists', () {
+        const json = {
+          '_hash': 'ROOT',
+          'list0': [
+            {
+              '_hash': 'LIST0',
+              'child0': {'_hash': 'CHILD0'},
+              'list1': [
+                {
+                  '_hash': 'LIST2',
+                  'child2': {'_hash': 'CHILD2'},
+                },
+              ],
+            },
+          ],
+        };
+
+        final ji = JsonInfo(json: json);
+        expect(
+          ji.updateOrder,
+          ['CHILD0', 'CHILD2', 'LIST2', 'LIST0', 'ROOT'],
+        );
+      });
+
+      test('of objects with references to others', () {
+        const json = {
+          '_hash': 'ROOT',
+          'child0': {
+            '_hash': 'CHILD0',
+            'ref': 'CHILD1',
+          },
+          'child1': {
+            '_hash': 'CHILD1',
+            'ref': 'CHILD2',
+          },
+          'child2': {
+            '_hash': 'CHILD2',
+            'key': 'value',
+          },
+        };
+
+        final ji = JsonInfo(json: json);
+        expect(
+          ji.updateOrder,
+          ['CHILD2', 'CHILD1', 'CHILD0', 'ROOT'],
+        );
       });
     });
   });
