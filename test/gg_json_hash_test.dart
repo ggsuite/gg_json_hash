@@ -1508,4 +1508,80 @@ void main() {
       expect(result['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
     });
   });
+
+  group('compareJson', () {
+    test('returns true for deeply equal simple maps', () {
+      final a = {'x': 1, 'y': 'test', 'z': true};
+      final b = {'x': 1, 'y': 'test', 'z': true};
+      expect(JsonHash.compareJson(a, b), isTrue);
+    });
+
+    test('returns true for deeply equal nested maps', () {
+      final a = {
+        'a': 1,
+        'b': {
+          'c': 2,
+          'd': [1, 2, 3],
+        },
+      };
+      final b = {
+        'a': 1,
+        'b': {
+          'c': 2,
+          'd': [1, 2, 3],
+        },
+      };
+      expect(JsonHash.compareJson(a, b), isTrue);
+    });
+
+    test('returns false for maps with different values', () {
+      final a = {'x': 1, 'y': 'test'};
+      final b = {'x': 2, 'y': 'test'};
+      expect(JsonHash.compareJson(a, b), isFalse);
+    });
+
+    test('returns false for maps with different keys', () {
+      final a = {'x': 1, 'y': 'test'};
+      final b = {'x': 1, 'z': 'test'};
+      expect(JsonHash.compareJson(a, b), isFalse);
+    });
+
+    test('returns false for maps with different nested values', () {
+      final a = {
+        'a': 1,
+        'b': {
+          'c': 2,
+          'd': [1, 2, 3],
+        },
+      };
+      final b = {
+        'a': 1,
+        'b': {
+          'c': 2,
+          'd': [1, 2, 4],
+        },
+      };
+      expect(JsonHash.compareJson(a, b), isFalse);
+    });
+
+    test('returns false for maps with different list lengths', () {
+      final a = {
+        'a': [1, 2, 3],
+      };
+      final b = {
+        'a': [1, 2],
+      };
+      expect(JsonHash.compareJson(a, b), isFalse);
+    });
+
+    test('returns true for empty maps', () {
+      expect(JsonHash.compareJson({}, {}), isTrue);
+    });
+
+    test('returns false for different types in values', () {
+      final a = {'a': 1};
+      final b = {'a': '1'};
+      expect(JsonHash.compareJson(a, b), isFalse);
+    });
+  });
 }
