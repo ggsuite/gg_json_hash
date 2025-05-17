@@ -99,7 +99,7 @@ void main() {
         });
       });
 
-      group('allObjects', () {
+      group('allObjects, allHashes', () {
         group('returns a list of all objects', () {
           test('for a deeply nested object', () {
             init();
@@ -118,6 +118,17 @@ void main() {
                 'CHILD4',
               ],
             );
+
+            expect(fixHashes1.allHashes, [
+              'ROOT',
+              'PARENT',
+              'CHILD0',
+              'CHILD1',
+              'LIST0',
+              'CHILD3',
+              'LIST1',
+              'CHILD4',
+            ]);
           });
 
           test('for object in an array', () {
@@ -146,6 +157,12 @@ void main() {
                 'CHILD1',
               ],
             );
+
+            expect(fixHashes.allHashes, [
+              'ROOT',
+              'CHILD0',
+              'CHILD1',
+            ]);
           });
 
           test('for object in an array in an array', () {
@@ -176,6 +193,42 @@ void main() {
                 'CHILD1',
               ],
             );
+
+            expect(fixHashes.allHashes, [
+              'ROOT',
+              'CHILD0',
+              'CHILD1',
+            ]);
+          });
+
+          test('for an object with missing _hashes', () {
+            const json = {
+              'child': {
+                'grandChild0': {'_hash': 'HASH0'},
+                'grandChild2': {'key': 'value'},
+              },
+            };
+
+            final fixHashes = JsonInfo(
+              json: json,
+            );
+            final oh = fixHashes.allObjects.map((e) => e['_hash']).toList();
+            expect(
+              oh,
+              [
+                'UWPFyflDOcMsNU9Bn4f1LG',
+                'Gd576RRXUydlpqqaOWJ2HS',
+                'HASH0',
+                '5Dq88zdSRIOcAS-WM_lYYt',
+              ],
+            );
+
+            expect(fixHashes.allHashes, [
+              'UWPFyflDOcMsNU9Bn4f1LG',
+              'Gd576RRXUydlpqqaOWJ2HS',
+              'HASH0',
+              '5Dq88zdSRIOcAS-WM_lYYt',
+            ]);
           });
         });
       });
@@ -191,6 +244,7 @@ void main() {
 
             expect(fixHashes1.refDependencies, <String, dynamic>{});
           });
+
           test('when the object references itself', () {
             const json = {
               '_hash': 'ROOT',
@@ -355,6 +409,60 @@ void main() {
                 },
               );
             });
+          });
+
+          group('when the object is referenced as path segment', () {
+            for (final delimiter in [
+              '/',
+              '.',
+              '|',
+              '[',
+              ']',
+              '\\',
+              '%',
+              '(',
+              ')',
+              '.',
+              ' ',
+            ]) {
+              test('delimited by $delimiter', () {
+                final json = {
+                  '_hash': 'ROOT',
+                  'objectA': {
+                    '_hash': 'OBJECTA',
+                    'objectB': {
+                      '_hash': 'OBJECTB',
+                      'objectC': {
+                        '_hash': 'OBJECTC',
+                        'key': 'objectCValue',
+                      },
+                    },
+                  },
+                  'refObject': {
+                    'ref': ['OBJECTA', 'OBJECTB', 'OBJECTC'].join(delimiter),
+                    '_hash': 'REFOBJECT',
+                  },
+                };
+
+                final fixHashes = JsonInfo(json: json);
+
+                expect(
+                  fixHashes.refDependents,
+                  {
+                    'OBJECTA': ['REFOBJECT'],
+                    'OBJECTB': ['REFOBJECT'],
+                    'OBJECTC': ['REFOBJECT'],
+                  },
+                );
+
+                expect(
+                  fixHashes.refDependencies,
+                  {
+                    'REFOBJECT': ['OBJECTA', 'OBJECTB', 'OBJECTC'],
+                  },
+                );
+              });
+            }
           });
         });
       });

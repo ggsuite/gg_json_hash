@@ -28,11 +28,20 @@ class JsonInfo {
   /// Assigns each object of the array to its hash
   final Map<String, Map<String, dynamic>> hashToObjects = {};
 
+  /// A set of all hashes that are used in the json
+  late final Iterable<String> allHashes;
+
   /// Assigns to each hash hashes that are referenced by the hash
   final Map<String, List<String>> refDependents = {};
 
   /// Assigns to each object hash a list of dependencies
   final Map<String, List<String>> refDependencies = {};
+
+  /// HIER WEITER: Assigns to each hash child hashes the object with hash depends on
+  final Map<String, List<String>> childDependencies = {};
+
+  /// HIER WEITER:  Assigns to each hash parent that depend on the child
+  final Map<String, List<String>> childDependents = {};
 
   // ######################
   // Private
@@ -41,6 +50,7 @@ class JsonInfo {
   // ...........................................................................
   void _init() {
     _initHashToObjects(json);
+    _initAllHashes();
     _initDependencies();
   }
 
@@ -85,6 +95,12 @@ class JsonInfo {
     }
   }
 
+  // ...........................................................................
+  void _initAllHashes() {
+    allHashes = hashToObjects.keys;
+  }
+
+  // ...........................................................................
   void _initDependencies() {
     for (final parentObject in allObjects) {
       final parentHash = parentObject['_hash'] as String;
@@ -116,9 +132,15 @@ class JsonInfo {
     }
   }
 
+  final _byDelimiter = RegExp(r'[\.\[\]\\\/\s%\(\)\|]');
+
   void _processStringValue(String childValue, String parentHash) {
-    if (hashToObjects.containsKey(childValue)) {
-      _writeDependency(parentHash, childValue);
+    final parts = childValue.split(_byDelimiter);
+
+    for (final childValuePart in parts) {
+      if (hashToObjects.containsKey(childValuePart)) {
+        _writeDependency(parentHash, childValuePart);
+      }
     }
   }
 
