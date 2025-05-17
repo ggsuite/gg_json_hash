@@ -464,6 +464,53 @@ void main() {
               });
             }
           });
+
+          test('when the object is referenced by a key', () {
+            final json = {
+              '_hash': 'ROOT',
+              'objectA': {
+                '_hash': 'OBJECTA',
+                'objectB': {
+                  '_hash': 'OBJECTB',
+                  'objectC': {
+                    '_hash': 'OBJECTC',
+                    'key': 'objectCValue',
+                  },
+                },
+              },
+              'refMap': {
+                '_hash': 'REFMAP',
+                'OBJECTA': 10,
+                'OBJECTB': 20,
+                'OBJECTC': 30,
+              },
+            };
+
+            final fixHashes = JsonInfo(json: json);
+
+            expect(
+              fixHashes.refDependents,
+              {
+                'OBJECTA': ['REFMAP'],
+                'OBJECTB': ['REFMAP'],
+                'OBJECTC': ['REFMAP'],
+              },
+            );
+
+            expect(
+              fixHashes.refDependencies,
+              {
+                'REFMAP': ['OBJECTA', 'OBJECTB', 'OBJECTC'],
+              },
+            );
+          });
+        });
+      });
+
+      group('childDependencies, childDependents', () {
+        test('with empty objects', () {
+          const json = <String, dynamic>{};
+          final fixHashes = JsonInfo(json: json);
         });
       });
     });

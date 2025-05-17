@@ -37,10 +37,10 @@ class JsonInfo {
   /// Assigns to each object hash a list of dependencies
   final Map<String, List<String>> refDependencies = {};
 
-  /// HIER WEITER: Assigns to each hash child hashes the object with hash depends on
+  /// Assigns to each hash child hashes the object with hash depends on
   final Map<String, List<String>> childDependencies = {};
 
-  /// HIER WEITER:  Assigns to each hash parent that depend on the child
+  /// Assigns to each hash parent that depend on the child
   final Map<String, List<String>> childDependents = {};
 
   // ######################
@@ -51,7 +51,8 @@ class JsonInfo {
   void _init() {
     _initHashToObjects(json);
     _initAllHashes();
-    _initDependencies();
+    _initRefDependencies();
+    _initChildDependencies();
   }
 
   // ...........................................................................
@@ -101,21 +102,23 @@ class JsonInfo {
   }
 
   // ...........................................................................
-  void _initDependencies() {
+  void _initRefDependencies() {
     for (final parentObject in allObjects) {
       final parentHash = parentObject['_hash'] as String;
 
       for (final key in parentObject.keys) {
         final childValue = parentObject[key];
+        if (key != '_hash') {
+          // Process hashes in keys
+          _processStringValue(key, parentHash);
 
-        if (childValue is String && key != '_hash') {
-          _processStringValue(childValue, parentHash);
-        } else if (childValue is List) {
-          _processList(childValue, parentObject);
-        } /*else if (childValue is Map<String, dynamic>) {
-          final childHash = childValue['_hash'] as String;
-          _writeDependency(parentHash, childHash);
-        }*/
+          // Process hashes in values
+          if (childValue is String && key != '_hash') {
+            _processStringValue(childValue, parentHash);
+          } else if (childValue is List) {
+            _processList(childValue, parentObject);
+          }
+        }
       }
     }
   }
@@ -162,4 +165,7 @@ class JsonInfo {
     }
     b.add(childHash);
   }
+
+  // ...........................................................................
+  void _initChildDependencies() {}
 }
