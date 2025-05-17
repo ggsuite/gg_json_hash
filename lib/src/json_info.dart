@@ -95,7 +95,7 @@ class JsonInfo {
       }
     }
 
-    if (ambigiousHashes.isNotEmpty) {
+    if (unequalAmbigiousHashes.isNotEmpty) {
       final hashes = ambigiousHashes.keys.map((e) => '  - $e');
       throw Exception(
         [

@@ -993,7 +993,7 @@ void main() {
     });
 
     group('throwOnUnequalAmbigiousHashes', () {
-      test('throws on ambigious hashes', () {
+      test('throws on ambigious hashes that point to different objects', () {
         const json = {
           '_hash': 'ROOT',
           'child0': {
@@ -1029,6 +1029,31 @@ void main() {
             '  - HASH1',
           ].join('\n'),
         );
+      });
+
+      test('throws not on ambigious hashes that point to equal objects', () {
+        const json = {
+          '_hash': 'ROOT',
+          'child0': {
+            '_hash': 'HASH0',
+            'key': 'a',
+          },
+          'child1': {
+            '_hash': 'HASH0',
+            'key': 'a',
+          },
+          'child2': {
+            '_hash': 'HASH1',
+            'key': 'b',
+          },
+          'child3': {
+            '_hash': 'HASH1',
+            'key': 'b',
+          },
+        };
+
+        final ji = JsonInfo(json: json);
+        expect(() => ji.throwOnUnequalAmbigiousHashes(), returnsNormally);
       });
     });
 
