@@ -214,8 +214,10 @@ void main() {
       });
     });
 
-    group('refDependents, refDependencies, childDependencies, childDependents',
-        () {
+    group(
+        'refDependents, refDependencies, '
+        'childDependencies, childDependents, '
+        'allDependencies, allDependents', () {
       group('returns a list of objects that reference to a given hash', () {
         test('when the json contains no references', () {
           init();
@@ -249,6 +251,18 @@ void main() {
 
           expect(fh.childDependencies, <String, List<String>>{});
           expect(fh.childDependents, <String, List<String>>{});
+          expect(
+            fh.allDependencies,
+            {
+              'ROOT': ['ROOT'],
+            },
+          );
+          expect(
+            fh.allDependents,
+            {
+              'ROOT': ['ROOT'],
+            },
+          );
         });
 
         test('when the object is references by a child object', () {
@@ -277,6 +291,22 @@ void main() {
           expect(fh.childDependents, {
             'CHILD': ['ROOT'],
           });
+
+          expect(
+            fh.allDependencies,
+            {
+              'ROOT': ['CHILD'],
+              'CHILD': ['ROOT'],
+            },
+          );
+
+          expect(
+            fh.allDependents,
+            {
+              'ROOT': ['CHILD'],
+              'CHILD': ['ROOT'],
+            },
+          );
         });
 
         test('when the object is references by a sibling object', () {
@@ -322,6 +352,19 @@ void main() {
               'CHILD1': ['ROOT'],
             },
           );
+
+          expect(fixHashes.allDependents, {
+            'CHILD0': ['ROOT'],
+            'CHILD1': ['CHILD0', 'ROOT'],
+          });
+
+          expect(
+            fixHashes.allDependencies,
+            {
+              'ROOT': ['CHILD0', 'CHILD1'],
+              'CHILD0': ['CHILD1'],
+            },
+          );
         });
 
         group('when the object is referenced within a list', () {
@@ -340,6 +383,23 @@ void main() {
               {
                 'ROOT': ['ROOT'],
               },
+            );
+
+            expect(
+              fixHashes.refDependencies,
+              {
+                'ROOT': ['ROOT'],
+              },
+            );
+
+            expect(
+              fixHashes.childDependencies,
+              <String, dynamic>{},
+            );
+
+            expect(
+              fixHashes.childDependents,
+              <String, dynamic>{},
             );
           });
 
@@ -373,6 +433,13 @@ void main() {
             );
 
             expect(
+              fixHashes.childDependents,
+              {
+                'CHILD': ['ROOT'],
+              },
+            );
+
+            expect(
               fixHashes.childDependencies,
               {
                 'ROOT': ['CHILD'],
@@ -383,6 +450,13 @@ void main() {
               fixHashes.childDependents,
               {
                 'CHILD': ['ROOT'],
+              },
+            );
+
+            expect(
+              fixHashes.childDependencies,
+              {
+                'ROOT': ['CHILD'],
               },
             );
           });
@@ -419,14 +493,17 @@ void main() {
             );
 
             expect(
-              fixHashes.childDependencies,
+              fixHashes.allDependents,
               {
+                'CHILD1': ['ROOT'],
                 'ROOT': ['CHILD1'],
               },
             );
+
             expect(
-              fixHashes.childDependents,
+              fixHashes.allDependencies,
               {
+                'ROOT': ['CHILD1'],
                 'CHILD1': ['ROOT'],
               },
             );
@@ -501,6 +578,25 @@ void main() {
                   'REFOBJECT': ['ROOT'],
                 },
               );
+
+              expect(
+                fixHashes.allDependencies,
+                {
+                  'ROOT': ['OBJECTA', 'REFOBJECT'],
+                  'OBJECTA': ['OBJECTB'],
+                  'OBJECTB': ['OBJECTC'],
+                  'REFOBJECT': ['OBJECTA', 'OBJECTB', 'OBJECTC'],
+                },
+              );
+              expect(
+                fixHashes.allDependents,
+                {
+                  'OBJECTA': ['REFOBJECT', 'ROOT'],
+                  'OBJECTB': ['REFOBJECT', 'OBJECTA'],
+                  'OBJECTC': ['REFOBJECT', 'OBJECTB'],
+                  'REFOBJECT': ['ROOT'],
+                },
+              );
             });
           }
         });
@@ -559,6 +655,26 @@ void main() {
               'OBJECTA': ['ROOT'],
               'OBJECTB': ['OBJECTA'],
               'OBJECTC': ['OBJECTB'],
+              'REFMAP': ['ROOT'],
+            },
+          );
+
+          expect(
+            fixHashes.allDependencies,
+            {
+              'ROOT': ['OBJECTA', 'REFMAP'],
+              'OBJECTA': ['OBJECTB'],
+              'OBJECTB': ['OBJECTC'],
+              'REFMAP': ['OBJECTA', 'OBJECTB', 'OBJECTC'],
+            },
+          );
+
+          expect(
+            fixHashes.allDependents,
+            {
+              'OBJECTA': ['REFMAP', 'ROOT'],
+              'OBJECTB': ['REFMAP', 'OBJECTA'],
+              'OBJECTC': ['REFMAP', 'OBJECTB'],
               'REFMAP': ['ROOT'],
             },
           );
