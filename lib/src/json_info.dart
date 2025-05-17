@@ -46,6 +46,9 @@ class JsonInfo {
   /// Assigns hashes of objects to hashes of objects that refer to the object
   final Map<String, List<String>> allDependents = {};
 
+  /// Returns a list of circular dependencies
+  final List<List<String>> circularDependencies = [];
+
   // ######################
   // Private
   // ######################
@@ -58,6 +61,7 @@ class JsonInfo {
     _initRefDependencies();
     _initChildDependencies(json);
     _initAllDependencies();
+    _initCircularDependencies();
   }
 
   // ...........................................................................
@@ -249,5 +253,50 @@ class JsonInfo {
         allDependents[hash] = {...refDeps2, ...childDeps2}.toList();
       }
     }
+  }
+
+  // ...........................................................................
+  void _initCircularDependencies() {
+    // Create a copy of the list of all hashes that have dependencies
+    final processedHashes = <String>{};
+    for (final key in allDependencies.keys) {
+      _findCircularReferences(key, [], processedHashes);
+    }
+  }
+
+  void _findCircularReferences(
+    String key,
+    List<String> chain,
+    Set<String> processedHashes,
+  ) {
+    // Check if the current key is already in the chain
+    // -> circular dependency
+    if (chain.contains(key)) {
+      final index = chain.indexOf(key);
+      chain = [...chain.sublist(index), key];
+      circularDependencies.add(chain);
+      return;
+    }
+
+    // Add the key to the chain
+    chain = [...chain, key];
+
+    // If the key has already been processed, stop here
+    if (processedHashes.contains(key)) {
+      return;
+    }
+    processedHashes.add(key);
+
+    // Check all dependencies
+    final dependencies = allDependencies[key];
+    if (dependencies == null) {
+      return;
+    } else {
+      for (final d in dependencies) {
+        _findCircularReferences(d, chain, processedHashes);
+      }
+    }
+
+    return;
   }
 }

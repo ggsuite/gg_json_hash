@@ -681,5 +681,128 @@ void main() {
         });
       });
     });
+
+    group('circularDependencies', () {
+      group('returns lists of hashes that form ciruclar dependencies', () {
+        group('when a hash of an object', () {
+          test('is used by the object itself', () {
+            const json = {
+              '_hash': 'ROOT',
+              'ref': 'ROOT',
+            };
+
+            final fixHashes = JsonInfo(json: json);
+
+            expect(fixHashes.circularDependencies, [
+              ['ROOT', 'ROOT'],
+            ]);
+          });
+
+          test('is used by a child object', () {
+            const json = {
+              '_hash': 'ROOT',
+              'child': {
+                '_hash': 'CHILD',
+                'ref': 'ROOT',
+              },
+            };
+
+            final fixHashes = JsonInfo(json: json);
+
+            expect(fixHashes.circularDependencies, [
+              ['ROOT', 'CHILD', 'ROOT'],
+            ]);
+          });
+
+          test('is used by a grand child object', () {
+            const json = {
+              '_hash': 'ROOT',
+              'child': {
+                '_hash': 'CHILD',
+                'grandChild': {
+                  '_hash': 'GRANDCHILD',
+                  'ref': 'ROOT',
+                },
+              },
+            };
+
+            final fixHashes = JsonInfo(json: json);
+
+            expect(fixHashes.circularDependencies, [
+              ['ROOT', 'CHILD', 'GRANDCHILD', 'ROOT'],
+            ]);
+          });
+
+          test('is used by a sibling object which is used by a sibling etc.',
+              () {
+            const json = {
+              '_hash': 'ROOT',
+              'child0': {
+                '_hash': 'CHILD0',
+                'ref': 'CHILD1',
+              },
+              'child1': {
+                '_hash': 'CHILD1',
+                'ref': 'GRANDCHILD',
+              },
+              'child2': {
+                '_hash': 'CHILD2',
+                'grandChild': {
+                  '_hash': 'GRANDCHILD',
+                  'ref': 'CHILD0',
+                },
+              },
+            };
+
+            final fixHashes = JsonInfo(json: json);
+
+            expect(fixHashes.circularDependencies, [
+              ['CHILD0', 'CHILD1', 'GRANDCHILD', 'CHILD0'],
+            ]);
+          });
+        });
+
+        test('with multiple circular dependencies', () {
+          const json = {
+            '_hash': 'ROOT',
+            'chain0': {
+              'item0': {
+                '_hash': 'ITEM00',
+                'ref': 'ITEM01',
+              },
+              'item1': {
+                '_hash': 'ITEM01',
+                'ref': 'ITEM02',
+              },
+              'item2': {
+                '_hash': 'ITEM02',
+                'ref': 'ITEM00',
+              },
+            },
+            'chain1': {
+              'item0': {
+                '_hash': 'ITEM10',
+                'ref': 'ITEM11',
+              },
+              'item1': {
+                '_hash': 'ITEM11',
+                'ref': 'ITEM12',
+              },
+              'item2': {
+                '_hash': 'ITEM12',
+                'ref': 'ITEM10',
+              },
+            },
+          };
+
+          final fixHashes = JsonInfo(json: json);
+
+          expect(fixHashes.circularDependencies, [
+            ['ITEM00', 'ITEM01', 'ITEM02', 'ITEM00'],
+            ['ITEM10', 'ITEM11', 'ITEM12', 'ITEM10'],
+          ]);
+        });
+      });
+    });
   });
 }
