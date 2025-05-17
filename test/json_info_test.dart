@@ -214,6 +214,80 @@ void main() {
       });
     });
 
+    group('ambigiousHashes', () {
+      group('returns hashes that are used by multiple different objects', () {
+        test('for json without ambigious objects', () {
+          const json = {
+            'a': {'b': 'c'},
+          };
+
+          final ji = JsonInfo(json: json);
+          expect(ji.ambigiousHashes, isEmpty);
+        });
+
+        group('for ambigious objects', () {
+          test('on the same level', () {
+            const json = {
+              'a': {'b': 'c', '_hash': 'HASH'},
+              'c': {'b': 'd', '_hash': 'HASH'},
+            };
+
+            final ji = JsonInfo(json: json);
+            expect(ji.ambigiousHashes, {
+              'HASH': [
+                {'b': 'c', '_hash': 'HASH'},
+                {'b': 'd', '_hash': 'HASH'},
+              ],
+            });
+          });
+
+          test('on different levels', () {
+            const json = {
+              'a': {
+                'b': {
+                  'c': {'_hash': 'HASH', 'key': 'a'},
+                },
+              },
+              'd': {
+                'e': {'_hash': 'HASH', 'key': 'b'},
+              },
+            };
+
+            final ji = JsonInfo(json: json);
+            expect(ji.ambigiousHashes, {
+              'HASH': [
+                {'_hash': 'HASH', 'key': 'a'},
+                {'_hash': 'HASH', 'key': 'b'},
+              ],
+            });
+          });
+
+          test('in nested lists', () {
+            const json = {
+              'a': [
+                [
+                  {'_hash': 'HASH', 'key': 'a'},
+                ],
+              ],
+              'b': [
+                [
+                  {'_hash': 'HASH', 'key': 'b'},
+                ],
+              ],
+            };
+
+            final ji = JsonInfo(json: json);
+            expect(ji.ambigiousHashes, {
+              'HASH': [
+                {'_hash': 'HASH', 'key': 'a'},
+                {'_hash': 'HASH', 'key': 'b'},
+              ],
+            });
+          });
+        });
+      });
+    });
+
     group(
         'refDependents, refDependencies, '
         'childDependencies, childDependents, '

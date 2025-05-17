@@ -24,6 +24,9 @@ class JsonInfo {
   /// Assigns each object of the array to its hash
   final Map<String, Map<String, dynamic>> hashToObjects = {};
 
+  /// Offers hashes that are connected to different objects
+  final Map<String, List<Map<String, dynamic>>> ambigiousHashes = {};
+
   /// A set of all hashes that are used in the json
   late final Iterable<String> allHashes;
 
@@ -52,10 +55,40 @@ class JsonInfo {
   /// Returns a list of hashes in an update order
   List<String> get updateOrder {
     if (_updateOrder == null) {
+      throwOnCircularDependencies();
       _initUpdateOrder();
     }
 
     return _updateOrder!;
+  }
+
+  // ...........................................................................
+  /// Throws an exception if circular dependencies are detected
+  void throwOnCircularDependencies() {
+    if (circularDependencies.isNotEmpty) {
+      final deps = circularDependencies.map((e) => '  - ${e.join(' -> ')}');
+
+      throw Exception(
+        [
+          'Cannot update hashes: Circular dependencies detected:',
+          ...deps,
+        ].join('\n'),
+      );
+    }
+  }
+
+  // ...........................................................................
+  /// Throws an exception if ambigious hashes are detected
+  void throwOnAmbigiousHashes() {
+    if (ambigiousHashes.isNotEmpty) {
+      final hashes = ambigiousHashes.keys.map((e) => '  - $e');
+      throw Exception(
+        [
+          'Cannot update hashes: Ambigious hashes detected:',
+          ...hashes,
+        ].join('\n'),
+      );
+    }
   }
 
   // ######################
@@ -97,6 +130,7 @@ class JsonInfo {
   // ...........................................................................
   void _initHashToObjects(Map<String, dynamic> json) {
     var hash = json['_hash'] as String;
+    _updateAmbigiousObjects(json, hash);
     allObjects.add(json);
     hashToObjects[hash] = json;
 
@@ -117,6 +151,29 @@ class JsonInfo {
         _initHashToObjects(item);
       } else if (item is List) {
         _initHashToObjectsForList(item);
+      }
+    }
+  }
+
+  // ...........................................................................
+  void _updateAmbigiousObjects(
+    Map<String, dynamic> newJson,
+    String hash,
+  ) {
+    final existingJson = hashToObjects[hash];
+
+    if (existingJson == null) {
+      return;
+    }
+
+    final areEqual = JsonHash.compareJson(newJson, existingJson);
+    if (!areEqual) {
+      final ao = ambigiousHashes[hash] ??= [];
+      if (!ao.contains(existingJson)) {
+        ao.add(existingJson);
+      }
+      if (!ao.contains(newJson)) {
+        ao.add(newJson);
       }
     }
   }
@@ -313,8 +370,6 @@ class JsonInfo {
   List<String>? _updateOrder;
 
   void _initUpdateOrder() {
-    _throwOnCircularDependencies();
-
     _updateOrder = [];
 
     final allHashes = this.allHashes.toList();
@@ -336,19 +391,5 @@ class JsonInfo {
     }
     _updateOrder!.add(hash);
     remainingHashes.remove(hash);
-  }
-
-  // ...........................................................................
-  void _throwOnCircularDependencies() {
-    if (circularDependencies.isNotEmpty) {
-      final deps = circularDependencies.map((e) => '  - ${e.join(' -> ')}');
-
-      throw Exception(
-        [
-          'Cannot update hashes: Circular dependencies detected:',
-          ...deps,
-        ].join('\n'),
-      );
-    }
   }
 }
