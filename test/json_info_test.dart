@@ -753,6 +753,49 @@ void main() {
             },
           );
         });
+
+        test('when the same hash occurs multiple times', () {
+          const json = {
+            '_hash': 'ROOT',
+            'child0': {
+              '_hash': 'HASH',
+              'key': 'a',
+            },
+            'child1': {
+              '_hash': 'HASH',
+              'key': 'a',
+            },
+            'child3': {
+              '_hash': 'CHILD3',
+              'grandChild': {
+                '_hash': 'GRANDCHILD',
+                'child3': {
+                  '_hash': 'HASH',
+                  'key': 'a',
+                },
+              },
+            },
+          };
+
+          final ji = JsonInfo(json: json);
+          expect(
+            ji.childDependents,
+            {
+              'HASH': ['ROOT', 'GRANDCHILD'],
+              'CHILD3': ['ROOT'],
+              'GRANDCHILD': ['CHILD3'],
+            },
+          );
+
+          expect(
+            ji.childDependencies,
+            {
+              'ROOT': ['HASH', 'CHILD3'],
+              'CHILD3': ['GRANDCHILD'],
+              'GRANDCHILD': ['HASH'],
+            },
+          );
+        });
       });
     });
 
@@ -909,7 +952,7 @@ void main() {
       });
     });
 
-    group('updateOrder', () {
+    group('throwOnAmbigousHashes', () {
       test('throws on circluar dependencies', () {
         const json = {
           '_hash': 'ROOT',
@@ -947,7 +990,49 @@ void main() {
           ].join('\n'),
         );
       });
+    });
 
+    group('throwOnUnequalAmbigiousHashes', () {
+      test('throws on ambigious hashes', () {
+        const json = {
+          '_hash': 'ROOT',
+          'child0': {
+            '_hash': 'HASH0',
+            'key': 'a',
+          },
+          'child1': {
+            '_hash': 'HASH0',
+            'key': 'b',
+          },
+          'child2': {
+            '_hash': 'HASH1',
+            'key': 'x',
+          },
+          'child3': {
+            '_hash': 'HASH1',
+            'key': 'x',
+          },
+        };
+
+        final ji = JsonInfo(json: json);
+        var message = '';
+        try {
+          ji.throwOnUnequalAmbigiousHashes();
+        } catch (e) {
+          message = e.toString();
+        }
+        expect(
+          message,
+          [
+            'Exception: Ambigious hashes detected:',
+            '  - HASH0',
+            '  - HASH1',
+          ].join('\n'),
+        );
+      });
+    });
+
+    group('updateOrder', () {
       test('of an empty object', () {
         const json = {'_hash': 'ROOT'};
         final ji = JsonInfo(json: json);

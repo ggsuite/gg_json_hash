@@ -37,7 +37,7 @@ class UpdateHashes {
   // ######################
 
   void _init() {
-    jsonInfo.throwOnAmbigiousHashes();
+    jsonInfo.throwOnUnequalAmbigiousHashes();
     jsonInfo.throwOnCircularDependencies();
     _initUpdatedObjects();
     _initUpdatedJson();

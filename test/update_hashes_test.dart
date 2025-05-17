@@ -70,7 +70,7 @@ void main() {
           expect(
             message,
             [
-              'Exception: Cannot update hashes: Ambigious hashes detected:',
+              'Exception: Ambigious hashes detected:',
               '  - CHILD',
             ].join('\n'),
           );

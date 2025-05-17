@@ -25,7 +25,7 @@ class JsonInfo {
   final Map<String, Map<String, dynamic>> hashToObjects = {};
 
   /// Offers hashes that are connected to different objects
-  final Map<String, List<Map<String, dynamic>>> ambigiousHashes = {};
+  final Map<String, Set<Map<String, dynamic>>> ambigiousHashes = {};
 
   /// A set of all hashes that are used in the json
   late final Iterable<String> allHashes;
@@ -56,6 +56,7 @@ class JsonInfo {
   List<String> get updateOrder {
     if (_updateOrder == null) {
       throwOnCircularDependencies();
+      throwOnUnequalAmbigiousHashes();
       _initUpdateOrder();
     }
 
@@ -79,12 +80,26 @@ class JsonInfo {
 
   // ...........................................................................
   /// Throws an exception if ambigious hashes are detected
-  void throwOnAmbigiousHashes() {
+  void throwOnUnequalAmbigiousHashes() {
+    final unequalAmbigiousHashes = <String>[];
+    for (final entry in ambigiousHashes.entries) {
+      final hash = entry.key;
+      final objects = entry.value;
+      final firstObject = objects.first;
+      for (var i = 1; i < objects.length; i++) {
+        final object = objects.elementAt(i);
+        if (!JsonHash.areEqual(firstObject, object)) {
+          unequalAmbigiousHashes.add(hash);
+          break;
+        }
+      }
+    }
+
     if (ambigiousHashes.isNotEmpty) {
       final hashes = ambigiousHashes.keys.map((e) => '  - $e');
       throw Exception(
         [
-          'Cannot update hashes: Ambigious hashes detected:',
+          'Ambigious hashes detected:',
           ...hashes,
         ].join('\n'),
       );
@@ -166,16 +181,9 @@ class JsonInfo {
       return;
     }
 
-    final areEqual = JsonHash.compareJson(newJson, existingJson);
-    if (!areEqual) {
-      final ao = ambigiousHashes[hash] ??= [];
-      if (!ao.contains(existingJson)) {
-        ao.add(existingJson);
-      }
-      if (!ao.contains(newJson)) {
-        ao.add(newJson);
-      }
-    }
+    final ao = ambigiousHashes[hash] ??= {};
+    ao.add(existingJson);
+    ao.add(newJson);
   }
 
   // ...........................................................................
@@ -290,7 +298,9 @@ class JsonInfo {
       a = <String>[];
       childDependents[childHash] = a;
     }
-    a.add(parentHash);
+    if (!a.contains(parentHash)) {
+      a.add(parentHash);
+    }
 
     // Update dependencies
     var b = childDependencies[parentHash];
@@ -298,7 +308,9 @@ class JsonInfo {
       b = <String>[];
       childDependencies[parentHash] = b;
     }
-    b.add(childHash);
+    if (!b.contains(childHash)) {
+      b.add(childHash);
+    }
   }
 
   // ...........................................................................

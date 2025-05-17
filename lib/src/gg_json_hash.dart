@@ -150,7 +150,7 @@ class JsonHash {
   }
 
   /// Returns true if two JSON objects are deeply equal.
-  static bool compareJson(
+  static bool areEqual(
     Map<String, dynamic> a,
     Map<String, dynamic> b,
   ) {
