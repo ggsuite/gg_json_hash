@@ -184,9 +184,14 @@ void main() {
 
         test('for an object with missing _hashes', () {
           const json = {
-            'child': {
+            'child0': {
               'grandChild0': {'_hash': 'HASH0'},
-              'grandChild2': {'key': 'value'},
+              'grandChild1': {'key': 'value'},
+            },
+            'child1': {
+              '_hash': '',
+              'grandChild2': {'_hash': 'HASH1'},
+              'grandChild3': {'key': 'value'},
             },
           };
 
@@ -197,18 +202,23 @@ void main() {
           expect(
             oh,
             [
-              'UWPFyflDOcMsNU9Bn4f1LG',
-              'Gd576RRXUydlpqqaOWJ2HS',
+              'iVVKjjwtuhpDxzXGImf_3P',
+              'DJsESW_1W2ADX6zDTubL5f',
               'HASH0',
+              '5Dq88zdSRIOcAS-WM_lYYt',
+              'hu0mbJM_lBdIk6ydaGZPW-',
+              'HASH1',
               '5Dq88zdSRIOcAS-WM_lYYt',
             ],
           );
 
           expect(ji.allHashes, [
-            'UWPFyflDOcMsNU9Bn4f1LG',
-            'Gd576RRXUydlpqqaOWJ2HS',
+            'iVVKjjwtuhpDxzXGImf_3P',
+            'DJsESW_1W2ADX6zDTubL5f',
             'HASH0',
             '5Dq88zdSRIOcAS-WM_lYYt',
+            'hu0mbJM_lBdIk6ydaGZPW-',
+            'HASH1',
           ]);
         });
       });
@@ -587,16 +597,6 @@ void main() {
         group('when the object is referenced as path segment', () {
           for (final delimiter in [
             '/',
-            '.',
-            '|',
-            '[',
-            ']',
-            '\\',
-            '%',
-            '(',
-            ')',
-            '.',
-            ' ',
           ]) {
             test('delimited by $delimiter', () {
               final json = {

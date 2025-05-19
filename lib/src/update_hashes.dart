@@ -93,10 +93,17 @@ class UpdateHashes {
 
   dynamic _translate(dynamic val) {
     if (val is String) {
-      for (final entry in oldToNewHashes.entries) {
-        final oldHash = entry.key;
-        final newHash = entry.value;
-        val = val.replaceAll(oldHash, newHash);
+      final valSegments = val.split(JsonInfo.hashPathSeparator);
+      for (var i = 0; i < valSegments.length; i++) {
+        final segment = valSegments[i];
+        for (var entry in oldToNewHashes.entries) {
+          final oldHash = entry.key;
+          final newHash = entry.value;
+          if (segment == oldHash) {
+            valSegments[i] = newHash;
+          }
+        }
+        val = valSegments.join(JsonInfo.hashPathSeparator);
       }
     } else if (val is List) {
       final copy = [...val];
@@ -111,7 +118,7 @@ class UpdateHashes {
 
   void _initUpdatedJson() {
     final oldRootHash = jsonInfo.updateOrder.last;
-    final newRootHash = oldToNewHashes[oldRootHash];
+    final newRootHash = oldToNewHashes[oldRootHash] ?? oldRootHash;
     final newRoot = updatedObjects[newRootHash] as Map<String, dynamic>;
     const jh = JsonHash.defaultInstance;
     jh.validate(newRoot);

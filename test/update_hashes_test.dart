@@ -76,6 +76,18 @@ void main() {
         });
       });
 
+      test('does nothing when hashes are already perfect', () {
+        final json = hip({
+          'a': '5',
+          'b': {
+            'c': '6',
+          },
+        });
+
+        final jsonUpdated = uh(json);
+        expect(jsonUpdated, json);
+      });
+
       group('updates hashes and references in an object', () {
         test('that is empty', () {
           const json = {
@@ -324,6 +336,47 @@ void main() {
               'a': 5,
               '_hash': 'sugxnSwo3OC4Png24DZ1Dw',
             },
+          });
+        });
+      });
+
+      group('special cases', () {
+        group('one hash containing another hash', () {
+          test('should be handled correctly', () {
+            const json = {
+              '_hash': 'ROOT',
+              'child0': {
+                '_hash': 'A_B',
+                'key': '0',
+              },
+              'child1': {
+                '_hash': 'C_D',
+                'key': '1',
+              },
+              'child3': {
+                '_hash': 'A_B_C_D',
+                'key': '3',
+              },
+              'child4': {
+                'ref': 'A_B_C_D',
+                'key': '4',
+              },
+            };
+
+            final uh = UpdateHashes(json: json);
+            uh.apply();
+
+            expect(uh.updatedJson, {
+              '_hash': 'gtrP8T-j8dPmyLK3dVtGuK',
+              'child0': {'_hash': 'OOMROmpHVL_tNlj89AeGWM', 'key': '0'},
+              'child1': {'_hash': 'FcuGj40TVvIS7aVXvQCc2l', 'key': '1'},
+              'child3': {'_hash': 'ZOgYhRKyox862udZ3kaYvL', 'key': '3'},
+              'child4': {
+                'ref': 'ZOgYhRKyox862udZ3kaYvL',
+                'key': '4',
+                '_hash': 'm8a0Pq2xVAS1AeCekSqCCu',
+              },
+            });
           });
         });
       });

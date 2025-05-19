@@ -18,6 +18,10 @@ class JsonInfo {
   final Map<String, dynamic> json;
 
   // ...........................................................................
+  /// Separators for hashes
+  static const hashPathSeparator = '/';
+
+  // ...........................................................................
   /// A list of all objects
   final List<Map<String, dynamic>> allObjects = [];
 
@@ -128,7 +132,9 @@ class JsonInfo {
         _addMissingHashes(entry.value);
       }
 
-      if (json['_hash'] == null) {
+      final hash = json['_hash']?.trim() as String? ?? '';
+
+      if (hash.isEmpty) {
         json = hip(
           json,
           throwIfWrongHashes: false,
@@ -225,10 +231,8 @@ class JsonInfo {
     }
   }
 
-  final _byDelimiter = RegExp(r'[\.\[\]\\\/\s%\(\)\|]');
-
   void _processStringValue(String childValue, String parentHash) {
-    final parts = childValue.split(_byDelimiter);
+    final parts = childValue.split(hashPathSeparator);
 
     for (final childValuePart in parts) {
       if (hashToObjects.containsKey(childValuePart)) {
