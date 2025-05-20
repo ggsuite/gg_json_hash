@@ -29,6 +29,9 @@ class UpdateHashes {
   /// The update JSON
   late Map<String, dynamic> updatedJson;
 
+  /// Returns a hint which hashes need to be updated
+  String get updateHint => _updateHint;
+
   // ######################
   // Private
   // ######################
@@ -124,6 +127,17 @@ class UpdateHashes {
     jh.validate(newRoot);
     updatedJson = newRoot;
   }
+
+  String get _updateHint {
+    final replacements = oldToNewHashes.entries.map(
+      (e) => '  - ${e.key} -> ${e.value}',
+    );
+
+    return [
+      'The following hashes need to be replaced:',
+      ...replacements,
+    ].join('\n');
+  }
 }
 
 /// Updates the hashes in a given Json structure as well their usages
@@ -135,3 +149,10 @@ Map<String, dynamic> updateHashes(Map<String, dynamic> json) {
 
 /// Shortcut for [updateHashes]
 const uh = updateHashes;
+
+/// Prints an update hint for a given json
+String updateHint(Map<String, dynamic> json) {
+  final update = UpdateHashes(json: json);
+  update.apply();
+  return update.updateHint;
+}

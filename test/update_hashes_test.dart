@@ -382,4 +382,26 @@ void main() {
       });
     });
   });
+
+  group('updateHint', () {
+    test('shows which hashes need to be updated', () {
+      const json = {
+        '_hash': 'WRONG0',
+        'key': {
+          '_hash': 'WRONG1',
+          'key': {
+            '_hash': 'WRONG2',
+            'key': '1',
+          },
+        },
+      };
+
+      expect(updateHint(json).split('\n'), [
+        'The following hashes need to be replaced:',
+        '  - WRONG2 -> FcuGj40TVvIS7aVXvQCc2l',
+        '  - WRONG1 -> PlM9222uvfw_rhet-GZZgz',
+        '  - WRONG0 -> McfplpnHJ5e18OxKk4rwh5',
+      ]);
+    });
+  });
 }

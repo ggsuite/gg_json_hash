@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.13] - 2025-05-20
+
+### Added
+
+- Add updateHint
+
 ## [2.0.12] - 2025-05-19
 
 ### Changed
@@ -124,6 +130,7 @@
 
 - Increase version
 
+[2.0.13]: https://github.com/inlavigo/gg_json_hash/compare/2.0.12...2.0.13
 [2.0.12]: https://github.com/inlavigo/gg_json_hash/compare/2.0.11...2.0.12
 [2.0.11]: https://github.com/inlavigo/gg_json_hash/compare/2.0.10...2.0.11
 [2.0.10]: https://github.com/inlavigo/gg_json_hash/compare/2.0.9...2.0.10
