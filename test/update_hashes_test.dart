@@ -403,5 +403,10 @@ void main() {
         '  - WRONG0 -> McfplpnHJ5e18OxKk4rwh5',
       ]);
     });
+
+    test('shows a message, when all hashes are uptodate', () {
+      final json = hip({'key': 1});
+      expect(updateHint(json), 'All hashes are up to date.');
+    });
   });
 }

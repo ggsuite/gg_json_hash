@@ -133,6 +133,10 @@ class UpdateHashes {
       (e) => '  - ${e.key} -> ${e.value}',
     );
 
+    if (replacements.isEmpty) {
+      return 'All hashes are up to date.';
+    }
+
     return [
       'The following hashes need to be replaced:',
       ...replacements,
