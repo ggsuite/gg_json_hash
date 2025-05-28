@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.15] - 2025-05-28
+
+### Added
+
+- Add addMissingHashes
+
 ## [2.0.14] - 2025-05-20
 
 ### Changed
@@ -136,6 +142,7 @@
 
 - Increase version
 
+[2.0.15]: https://github.com/inlavigo/gg_json_hash/compare/2.0.14...2.0.15
 [2.0.14]: https://github.com/inlavigo/gg_json_hash/compare/2.0.13...2.0.14
 [2.0.13]: https://github.com/inlavigo/gg_json_hash/compare/2.0.12...2.0.13
 [2.0.12]: https://github.com/inlavigo/gg_json_hash/compare/2.0.11...2.0.12

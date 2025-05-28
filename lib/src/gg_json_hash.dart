@@ -185,6 +185,25 @@ class JsonHash {
   }
 
   // ...........................................................................
+  /// Inserts hashes, when _hash is null, empty or placeholder
+  Map<String, dynamic> addMissingHashes(
+    Map<String, dynamic> json, {
+    bool throwIfWrongHashes = false,
+    bool updateExistingHashes = false,
+  }) {
+    var hash = json['_hash'] as String?;
+    if (hash?.isNotEmpty != true) {
+      hip(
+        json,
+        throwIfWrongHashes: throwIfWrongHashes,
+        updateExistingHashes: updateExistingHashes,
+      );
+    }
+
+    return json;
+  }
+
+  // ...........................................................................
   /// Calculates a SHA-256 hash of a string with base64 url.
   String calcHash(String input) {
     final bytes = sha256.convert(utf8.encode(input)).bytes;
@@ -587,8 +606,13 @@ class JsonHash {
   }
 }
 
+// ...........................................................................
+
 /// Shorthand for applying hashes in place
 final hip = JsonHash.defaultInstance.applyInPlace;
 
 /// Shorthand for applying hashes
 final hsh = JsonHash.defaultInstance.apply;
+
+/// Fills empty hashes into
+final amh = JsonHash.defaultInstance.addMissingHashes;

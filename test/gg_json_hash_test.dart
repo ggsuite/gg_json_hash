@@ -976,6 +976,28 @@ void main() {
       });
     });
 
+    group('addMissingHashes', () {
+      test('does nothing when hash is available', () {
+        final json0 = hip({'a': 5});
+        final json1 = amh({...json0});
+        expect(json0, json1);
+      });
+
+      test('does replace null by the hash', () {
+        final json = amh({'a': 5, '_hash': null});
+        final hash = hsh(json)['_hash'];
+        expect(hash, isNotEmpty);
+        expect(json['_hash'], hash);
+      });
+
+      test('does replace undefined by the hash', () {
+        final json = amh({'a': 5});
+        final hash = hsh(json)['_hash'];
+        expect(hash, isNotEmpty);
+        expect(json['_hash'], hash);
+      });
+    });
+
     group('copyJson', () {
       const copyJson = JsonHash.copyJson;
 
