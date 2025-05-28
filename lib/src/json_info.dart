@@ -137,7 +137,7 @@ class JsonInfo {
       if (hash.isEmpty) {
         json = hip(
           json,
-          throwIfWrongHashes: false,
+          throwOnWrongHashes: false,
           updateExistingHashes: false,
         );
       }

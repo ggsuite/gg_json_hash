@@ -4,8 +4,9 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import 'package:gg_json_hash/gg_json_hash.dart';
 import 'dart:convert';
+
+import 'package:gg_json_hash/gg_json_hash.dart';
 
 void main() {
   var jh = JsonHash.defaultInstance;
@@ -48,9 +49,8 @@ void main() {
   print('Use the "inPlace" option to modify the input object directly.');
 
   json = {'a': 1, 'b': 2};
-  var ac = ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: true);
 
-  jh.apply(json, applyConfig: ac);
+  jh.apply(json, inPlace: true);
   assert(json['_hash'] == 'QyWM_3g_5wNtikMDP4MK38');
 
   // ...........................................................................
@@ -65,18 +65,17 @@ void main() {
     'child': <String, dynamic>{'c': 3},
     'child2': <String, dynamic>{'_hash': 'ABC123', 'd': 4},
   };
-  ac = ac.copyWith(updateExistingHashes: false);
 
-  json = jh.apply(json, applyConfig: ac);
+  json = jh.apply(json, updateExistingHashes: false);
   assert(json['_hash'] == 'pos6bn6mON0sirhEaXq41-');
   assert(json['child']['_hash'] == 'yrqcsGrHfad4G4u9fgcAxY');
   assert(json['child2']['_hash'] == 'ABC123');
 
   // ...........................................................................
   print('If existing hashes do not match new ones, an error is thrown.');
-  ac = ac.copyWith(throwIfOnWrongHashes: true);
+
   try {
-    jh.apply({'a': 1, '_hash': 'invalid'});
+    jh.apply({'a': 1, '_hash': 'invalid'}, throwOnWrongHashes: true);
   } catch (e) {
     print(e.toString());
     // 'Hash "invalid" does not match the newly calculated
@@ -85,12 +84,12 @@ void main() {
   }
 
   // ...........................................................................
-  print('Set "throwIfOnWrongHashes" to false to replace invalid hashes.');
-  ac = ac.copyWith(
-    throwIfOnWrongHashes: false,
+  print('Set "throwOnWrongHashes" to false to replace invalid hashes.');
+  json = jh.apply(
+    {'a': 1, '_hash': 'invalid'},
+    throwOnWrongHashes: false,
     updateExistingHashes: true,
   );
-  json = jh.apply({'a': 1, '_hash': 'invalid'}, applyConfig: ac);
   print(json['_hash']); // AVq9f1zFei3ZS3WQ8ErYCE
 
   // ...........................................................................

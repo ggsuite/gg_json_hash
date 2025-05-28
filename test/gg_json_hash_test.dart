@@ -232,15 +232,12 @@ void main() {
           });
 
           test('existing _hash should be overwritten', () {
-            final ac = ApplyJsonHashConfig.defaultConfig
-                .copyWith(throwIfOnWrongHashes: false);
-
             final json = jh.apply(
               {
                 'key': 'value',
                 '_hash': 'oldHash',
               },
-              applyConfig: ac,
+              throwOnWrongHashes: false,
             );
             expect(json['key'], equals('value'));
             final expectedHash = jh.calcHash('{"key":"value"}');
@@ -445,9 +442,7 @@ void main() {
               'key': 'value',
             };
 
-            final ac =
-                ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: true);
-            final hashedJson = jh.apply(json, applyConfig: ac);
+            final hashedJson = jh.apply(json, inPlace: true);
             expect(
               hashedJson,
               equals({
@@ -467,11 +462,9 @@ void main() {
             final json = {
               'key': 'value',
             };
-            final ac =
-                ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: false);
 
             // The returned copy has the hashes
-            final hashedJson = jh.apply(json, applyConfig: ac);
+            final hashedJson = jh.apply(json, inPlace: false);
             expect(
               hashedJson,
               equals({
@@ -500,11 +493,6 @@ void main() {
                 json['a']['b']['c']['_hash'] != 'hash_c';
           }
 
-          final ac = ApplyJsonHashConfig.defaultConfig.copyWith(
-            inPlace: true,
-            throwIfOnWrongHashes: false,
-          );
-
           test('should recalculate existing hashes', () {
             final json = <String, dynamic>{
               'a': {
@@ -519,8 +507,11 @@ void main() {
               },
             };
 
-            final ac2 = ac.copyWith(updateExistingHashes: true);
-            jh.apply(json, applyConfig: ac2);
+            jh.apply(
+              json,
+              inPlace: true,
+              throwOnWrongHashes: false,
+            );
             expect(allHashesChanged(json), isTrue);
           });
         });
@@ -529,8 +520,6 @@ void main() {
       group('does not touch existing hashes', () {
         group('when ApplyJsonHashConfig.updateExistingHashes is set to false',
             () {
-          var ac = ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: true);
-
           late Map<String, dynamic> json;
 
           bool noHashesChanged() {
@@ -572,27 +561,30 @@ void main() {
           }
 
           test('with all objects having hashes', () {
-            ac = ac.copyWith(
+            jh.apply(
+              json,
               updateExistingHashes: false,
-              throwIfOnWrongHashes: false,
+              throwOnWrongHashes: false,
             );
-            jh.apply(json, applyConfig: ac);
             expect(noHashesChanged(), isTrue);
           });
 
           test('with parents have no hashes', () {
             json['a'].remove('_hash');
-            ac = ac.copyWith(
+            jh.apply(
+              json,
               updateExistingHashes: false,
-              throwIfOnWrongHashes: false,
+              throwOnWrongHashes: false,
             );
-            jh.apply(json, applyConfig: ac);
             expect(changedHashes(), equals(['a']));
 
             json['a'].remove('_hash');
             json['a']['b'].remove('_hash');
-            ac = ac.copyWith(updateExistingHashes: false);
-            jh.apply(json, applyConfig: ac);
+            jh.apply(
+              json,
+              updateExistingHashes: true,
+              throwOnWrongHashes: false,
+            );
             expect(changedHashes(), equals(['a', 'b']));
           });
         });
@@ -850,20 +842,16 @@ void main() {
 
       group('throws, when existing hashes do not match newly calculated ones',
           () {
-        group('when ApplyJsonHashConfig.throwIfOnWrongHashes is set to true',
-            () {
+        group('when ApplyJsonHashConfig.throwOnWrongHashes is set to true', () {
           test('with a simple json', () {
             final json = {
               'key': 'value',
               '_hash': 'wrongHash',
             };
 
-            final ac = ApplyJsonHashConfig.defaultConfig
-                .copyWith(throwIfOnWrongHashes: true);
-
             String message = '';
             try {
-              jh.apply(json, applyConfig: ac);
+              jh.apply(json, throwOnWrongHashes: true);
             } catch (e) {
               message = e.toString();
             }
@@ -881,7 +869,7 @@ void main() {
         });
 
         group(
-            'but not when ApplyJsonHashConfig.throwIfOnWrongHashes '
+            'but not when ApplyJsonHashConfig.throwOnWrongHashes '
             'is set to false', () {
           test('with a simple json', () {
             final json = {
@@ -889,12 +877,11 @@ void main() {
               '_hash': 'wrongHash',
             };
 
-            final ac = ApplyJsonHashConfig.defaultConfig.copyWith(
-              throwIfOnWrongHashes: false,
+            jh.apply(
+              json,
+              throwOnWrongHashes: false,
               inPlace: true,
             );
-
-            jh.apply(json, applyConfig: ac);
             expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
           });
         });
@@ -981,6 +968,13 @@ void main() {
         final json0 = hip({'a': 5});
         final json1 = amh({...json0});
         expect(json0, json1);
+      });
+
+      test('does not touch the original object', () {
+        final json0 = {'a': 5};
+        final json1 = amh(json0);
+        expect(json0['_hash'], isNull);
+        expect(json1['_hash'], isNotEmpty);
       });
 
       test('does replace null by the hash', () {
@@ -1464,11 +1458,9 @@ void main() {
 
           jh.apply(
             json,
-            applyConfig: const ApplyJsonHashConfig(
-              updateExistingHashes: true,
-              throwIfOnWrongHashes: false,
-              inPlace: true,
-            ),
+            updateExistingHashes: true,
+            throwOnWrongHashes: false,
+            inPlace: true,
           );
 
           expect(

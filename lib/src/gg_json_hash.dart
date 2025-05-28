@@ -57,43 +57,6 @@ class NumberHashingConfig {
 }
 
 // .............................................................................
-/// When writing hashes into a given JSON object, we have various options.
-class ApplyJsonHashConfig {
-  /// Constructor
-  const ApplyJsonHashConfig({
-    this.inPlace = false,
-    this.updateExistingHashes = true,
-    this.throwIfOnWrongHashes = true,
-  });
-
-  /// Write the hashes in place.
-  final bool inPlace;
-
-  /// Update existing hashes.
-  final bool updateExistingHashes;
-
-  /// Throw an error if the hash is wrong.
-  final bool throwIfOnWrongHashes;
-
-  /// Default configuration.
-  static const ApplyJsonHashConfig defaultConfig = ApplyJsonHashConfig();
-
-  /// Creates a copy of the current ApplyJsonHashConfig
-  /// with optional new values.
-  ApplyJsonHashConfig copyWith({
-    bool? inPlace,
-    bool? updateExistingHashes,
-    bool? throwIfOnWrongHashes,
-  }) {
-    return ApplyJsonHashConfig(
-      inPlace: inPlace ?? this.inPlace,
-      updateExistingHashes: updateExistingHashes ?? this.updateExistingHashes,
-      throwIfOnWrongHashes: throwIfOnWrongHashes ?? this.throwIfOnWrongHashes,
-    );
-  }
-}
-
-// .............................................................................
 /// Options for the JSON hash.
 class HashConfig {
   /// Constructor
@@ -132,12 +95,18 @@ class JsonHash {
   /// Writes hashes into the JSON object.
   Map<String, dynamic> apply(
     Map<String, dynamic> json, {
-    ApplyJsonHashConfig applyConfig = ApplyJsonHashConfig.defaultConfig,
+    bool inPlace = false,
+    bool updateExistingHashes = true,
+    bool throwOnWrongHashes = true,
   }) {
-    final copy = applyConfig.inPlace ? json : _copyJson(json);
-    _addHashesToObject(copy, applyConfig);
+    final copy = inPlace ? json : _copyJson(json);
+    _addHashesToObject(
+      copy,
+      updateExistingHashes: updateExistingHashes,
+      throwOnWrongHashes: throwOnWrongHashes,
+    );
 
-    if (applyConfig.throwIfOnWrongHashes) {
+    if (throwOnWrongHashes) {
       validate(copy);
     }
     return copy;
@@ -163,24 +132,21 @@ class JsonHash {
   Map<String, dynamic> applyInPlace(
     Map<String, dynamic> json, {
     bool updateExistingHashes = false,
-    bool throwIfWrongHashes = true,
+    bool throwOnWrongHashes = true,
   }) {
-    final applyConfig = ApplyJsonHashConfig(
-      inPlace: true,
+    return apply(
+      json,
       updateExistingHashes: updateExistingHashes,
-      throwIfOnWrongHashes: throwIfWrongHashes,
+      throwOnWrongHashes: throwOnWrongHashes,
+      inPlace: true,
     );
-
-    return apply(json, applyConfig: applyConfig);
   }
 
   // ...........................................................................
   /// Writes hashes into a JSON string.
   String applyToJsonString(String jsonString) {
     final json = jsonDecode(jsonString) as Map<String, dynamic>;
-    final applyConfig =
-        ApplyJsonHashConfig.defaultConfig.copyWith(inPlace: true);
-    final hashedJson = apply(json, applyConfig: applyConfig);
+    final hashedJson = apply(json, inPlace: true);
     return jsonEncode(hashedJson);
   }
 
@@ -188,14 +154,14 @@ class JsonHash {
   /// Inserts hashes, when _hash is null, empty or placeholder
   Map<String, dynamic> addMissingHashes(
     Map<String, dynamic> json, {
-    bool throwIfWrongHashes = false,
+    bool throwOnWrongHashes = false,
     bool updateExistingHashes = false,
   }) {
     var hash = json['_hash'] as String?;
     if (hash?.isNotEmpty != true) {
-      hip(
+      return hsh(
         json,
-        throwIfWrongHashes: throwIfWrongHashes,
+        throwOnWrongHashes: throwOnWrongHashes,
         updateExistingHashes: updateExistingHashes,
       );
     }
@@ -217,9 +183,7 @@ class JsonHash {
   /// Throws if hashes are not correct.
   void validate(Map<String, dynamic> json) {
     // Check the hash of the high level element
-    final ac =
-        ApplyJsonHashConfig.defaultConfig.copyWith(throwIfOnWrongHashes: false);
-    final jsonWithCorrectHashes = apply(json, applyConfig: ac);
+    final jsonWithCorrectHashes = apply(json, throwOnWrongHashes: false);
     _validate(json, jsonWithCorrectHashes, '');
   }
 
@@ -286,11 +250,11 @@ class JsonHash {
   // ...........................................................................
   /// Recursively adds hashes to a nested object.
   void _addHashesToObject(
-    Map<String, dynamic> obj,
-    ApplyJsonHashConfig applyConfig,
-  ) {
-    final updateExisting = applyConfig.updateExistingHashes;
-    final throwIfOnWrongHashes = applyConfig.throwIfOnWrongHashes;
+    Map<String, dynamic> obj, {
+    bool updateExistingHashes = true,
+    bool throwOnWrongHashes = true,
+  }) {
+    final updateExisting = updateExistingHashes;
     final existingHash = obj['_hash'] as String? ?? '';
 
     if (!updateExisting && existingHash.isNotEmpty == true) {
@@ -305,9 +269,17 @@ class JsonHash {
           continue;
         }
 
-        _addHashesToObject(value, applyConfig);
+        _addHashesToObject(
+          value,
+          updateExistingHashes: updateExistingHashes,
+          throwOnWrongHashes: throwOnWrongHashes,
+        );
       } else if (value is List) {
-        _processList(value, applyConfig);
+        _processList(
+          value,
+          updateExistingHashes: updateExistingHashes,
+          throwOnWrongHashes: throwOnWrongHashes,
+        );
       }
     }
 
@@ -340,7 +312,7 @@ class JsonHash {
     final hash = calcHash(sortedMapJson);
 
     // Throw if old and new hash do not match
-    if (throwIfOnWrongHashes) {
+    if (throwOnWrongHashes) {
       final oldHash = obj['_hash'] as String? ?? '';
       if (oldHash.isNotEmpty && oldHash != hash) {
         throw Exception(
@@ -402,12 +374,24 @@ class JsonHash {
 
   // ...........................................................................
   /// Recursively processes a list, adding hashes to nested objects and lists.
-  void _processList(List<dynamic> list, ApplyJsonHashConfig applyConfig) {
+  void _processList(
+    List<dynamic> list, {
+    required bool updateExistingHashes,
+    required bool throwOnWrongHashes,
+  }) {
     for (final element in list) {
       if (element is Map<String, dynamic>) {
-        _addHashesToObject(element, applyConfig);
+        _addHashesToObject(
+          element,
+          updateExistingHashes: updateExistingHashes,
+          throwOnWrongHashes: throwOnWrongHashes,
+        );
       } else if (element is List) {
-        _processList(element, applyConfig);
+        _processList(
+          element,
+          updateExistingHashes: updateExistingHashes,
+          throwOnWrongHashes: throwOnWrongHashes,
+        );
       }
     }
   }

@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.0] - 2025-05-28
+
+### Changed
+
+- BREAKING CHANGE: Replace ApplyConfig by named parameters
+
 ## [2.0.15] - 2025-05-28
 
 ### Added
@@ -142,6 +148,7 @@
 
 - Increase version
 
+[3.0.0]: https://github.com/inlavigo/gg_json_hash/compare/2.0.15...3.0.0
 [2.0.15]: https://github.com/inlavigo/gg_json_hash/compare/2.0.14...2.0.15
 [2.0.14]: https://github.com/inlavigo/gg_json_hash/compare/2.0.13...2.0.14
 [2.0.13]: https://github.com/inlavigo/gg_json_hash/compare/2.0.12...2.0.13

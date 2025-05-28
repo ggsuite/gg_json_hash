@@ -102,7 +102,7 @@ void main() {
 
   // ...........................................................................
   print('If existing hashes do not match new ones, an error is thrown.');
-  ac = ac.copyWith(throwIfOnWrongHashes: true);
+  ac = ac.copyWith(throwOnWrongHashes: true);
   try {
     jh.apply({'a': 1, '_hash': 'invalid'});
   } catch (e) {
@@ -113,9 +113,9 @@ void main() {
   }
 
   // ...........................................................................
-  print('Set "throwIfOnWrongHashes" to false to replace invalid hashes.');
+  print('Set "throwOnWrongHashes" to false to replace invalid hashes.');
   ac = ac.copyWith(
-    throwIfOnWrongHashes: false,
+    throwOnWrongHashes: false,
     updateExistingHashes: true,
   );
   json = jh.apply({'a': 1, '_hash': 'invalid'}, applyConfig: ac);

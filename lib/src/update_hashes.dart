@@ -61,7 +61,7 @@ class UpdateHashes {
         _translateReferences(object);
 
         // Update the hash
-        hip(object, updateExistingHashes: false, throwIfWrongHashes: false);
+        hip(object, updateExistingHashes: false, throwOnWrongHashes: false);
 
         // Remember the old to new hash
         final newHash = object['_hash'] as String;
