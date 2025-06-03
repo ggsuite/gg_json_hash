@@ -19,7 +19,7 @@ class JsonInfo {
 
   // ...........................................................................
   /// Separators for hashes
-  static const hashPathSeparator = '/';
+  static const hashPathSeparators = ['/'];
 
   // ...........................................................................
   /// A list of all objects
@@ -232,11 +232,13 @@ class JsonInfo {
   }
 
   void _processStringValue(String childValue, String parentHash) {
-    final parts = childValue.split(hashPathSeparator);
+    for (final separator in JsonInfo.hashPathSeparators) {
+      final parts = childValue.split(separator);
 
-    for (final childValuePart in parts) {
-      if (hashToObjects.containsKey(childValuePart)) {
-        _writeDependency(parentHash, childValuePart);
+      for (final childValuePart in parts) {
+        if (hashToObjects.containsKey(childValuePart)) {
+          _writeDependency(parentHash, childValuePart);
+        }
       }
     }
   }

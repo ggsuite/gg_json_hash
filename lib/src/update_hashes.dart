@@ -96,17 +96,19 @@ class UpdateHashes {
 
   dynamic _translate(dynamic val) {
     if (val is String) {
-      final valSegments = val.split(JsonInfo.hashPathSeparator);
-      for (var i = 0; i < valSegments.length; i++) {
-        final segment = valSegments[i];
-        for (var entry in oldToNewHashes.entries) {
-          final oldHash = entry.key;
-          final newHash = entry.value;
-          if (segment == oldHash) {
-            valSegments[i] = newHash;
+      for (final separator in JsonInfo.hashPathSeparators) {
+        final valSegments = (val as String).split(separator);
+        for (var i = 0; i < valSegments.length; i++) {
+          final segment = valSegments[i];
+          for (var entry in oldToNewHashes.entries) {
+            final oldHash = entry.key;
+            final newHash = entry.value;
+            if (segment == oldHash) {
+              valSegments[i] = newHash;
+            }
           }
+          val = valSegments.join(separator);
         }
-        val = valSegments.join(JsonInfo.hashPathSeparator);
       }
     } else if (val is List) {
       final copy = [...val];
