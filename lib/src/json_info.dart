@@ -19,7 +19,7 @@ class JsonInfo {
 
   // ...........................................................................
   /// Separators for hashes
-  static const hashPathSeparators = ['/'];
+  static const hashPathSeparators = ['/', ':', '.'];
 
   // ...........................................................................
   /// A list of all objects
@@ -232,13 +232,12 @@ class JsonInfo {
   }
 
   void _processStringValue(String childValue, String parentHash) {
-    for (final separator in JsonInfo.hashPathSeparators) {
-      final parts = childValue.split(separator);
+    final regExp = RegExp('[${JsonInfo.hashPathSeparators.join('')}]');
+    final parts = childValue.split(regExp);
 
-      for (final childValuePart in parts) {
-        if (hashToObjects.containsKey(childValuePart)) {
-          _writeDependency(parentHash, childValuePart);
-        }
+    for (final childValuePart in parts) {
+      if (hashToObjects.containsKey(childValuePart)) {
+        _writeDependency(parentHash, childValuePart);
       }
     }
   }
@@ -251,7 +250,9 @@ class JsonInfo {
       refDependents[childHash] = a;
     }
 
-    a.add(parentHash);
+    if (!a.contains(parentHash)) {
+      a.add(parentHash);
+    }
 
     // Update dependencies
     var b = refDependencies[parentHash];
@@ -259,7 +260,9 @@ class JsonInfo {
       b = <String>[];
       refDependencies[parentHash] = b;
     }
-    b.add(childHash);
+    if (!b.contains(childHash)) {
+      b.add(childHash);
+    }
   }
 
   // ...........................................................................

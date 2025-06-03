@@ -68,11 +68,35 @@ class UpdateHashes {
 
         if (newHash != oldHash) {
           oldToNewHashes[oldHash] = newHash;
+          _insertOldHash(oldHash);
         }
 
         updatedObjects[newHash] = object;
       }
     }
+  }
+
+  final _oldHashes = <String>[];
+
+  // Sort old hashes with descending length to handle the case that
+  // one hash contains the other
+  void _insertOldHash(String oldHash) {
+    var i = 0;
+    for (i; i < _oldHashes.length; i++) {
+      final existingOldHash = _oldHashes[i];
+      final existingLength = existingOldHash.length;
+      final newLength = oldHash.length;
+      if (existingLength == newLength) {
+        if (oldHash == existingOldHash) {
+          return;
+        }
+      }
+
+      if (newLength > existingLength) {
+        break;
+      }
+    }
+    _oldHashes.insert(i, oldHash);
   }
 
   void _translateReferences(Map<String, dynamic> object) {
@@ -96,19 +120,9 @@ class UpdateHashes {
 
   dynamic _translate(dynamic val) {
     if (val is String) {
-      for (final separator in JsonInfo.hashPathSeparators) {
-        final valSegments = (val as String).split(separator);
-        for (var i = 0; i < valSegments.length; i++) {
-          final segment = valSegments[i];
-          for (var entry in oldToNewHashes.entries) {
-            final oldHash = entry.key;
-            final newHash = entry.value;
-            if (segment == oldHash) {
-              valSegments[i] = newHash;
-            }
-          }
-          val = valSegments.join(separator);
-        }
+      for (var oldHash in _oldHashes) {
+        final newHash = oldToNewHashes[oldHash];
+        val = val.replaceAll(oldHash, newHash);
       }
     } else if (val is List) {
       final copy = [...val];

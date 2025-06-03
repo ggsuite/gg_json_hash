@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.1] - 2025-06-03
+
+### Changed
+
+- Improve handling of separators like .,/,:
+
 ## [3.0.0] - 2025-05-28
 
 ### Changed
@@ -148,6 +154,7 @@
 
 - Increase version
 
+[3.0.1]: https://github.com/inlavigo/gg_json_hash/compare/3.0.0...3.0.1
 [3.0.0]: https://github.com/inlavigo/gg_json_hash/compare/2.0.15...3.0.0
 [2.0.15]: https://github.com/inlavigo/gg_json_hash/compare/2.0.14...2.0.15
 [2.0.14]: https://github.com/inlavigo/gg_json_hash/compare/2.0.13...2.0.14

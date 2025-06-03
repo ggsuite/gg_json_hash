@@ -8,7 +8,7 @@ import 'package:gg_json_hash/gg_json_hash.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('FixHashes', () {
+  group('UpdateHashes', () {
     bool isInitialized = false;
     late final JsonInfo ji0;
     late final JsonInfo ji1;
@@ -595,9 +595,7 @@ void main() {
         });
 
         group('when the object is referenced as path segment', () {
-          for (final delimiter in [
-            '/',
-          ]) {
+          for (final delimiter in JsonInfo.hashPathSeparators) {
             test('delimited by $delimiter', () {
               final json = {
                 '_hash': 'ROOT',

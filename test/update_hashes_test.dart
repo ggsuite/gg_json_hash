@@ -301,41 +301,119 @@ void main() {
           });
         });
 
-        test('with hashes as pathes', () {
-          const json = {
-            '_hash': 'ROOT',
-            'child0': {
-              '_hash': 'CHILD0',
-              'ref': {
-                '_hash': 'CHILD1',
-                'key': 'value',
+        group('with hashes as pathes', () {
+          test('delimited by /', () {
+            const json = {
+              '_hash': 'ROOT',
+              'child0': {
+                '_hash': 'CHILD0',
+                'ref': {
+                  '_hash': 'CHILD1',
+                  'key': 'value',
+                },
               },
-            },
-            '/CHILD0/CHILD1': {
-              'a': 5,
-            },
-            'child2': {
-              'b': '/CHILD1/CHILD0',
-            },
-          };
+              '/CHILD0/CHILD1': {
+                'a': 5,
+              },
+              'child2': {
+                'b': '/CHILD1/CHILD0',
+              },
+            };
 
-          final updateHashes = UpdateHashes(json: json);
-          updateHashes.apply();
-          final uj = updateHashes.updatedJson;
-          expect(uj, {
-            '_hash': 'mRHgTEhgWEy0g27nquOzxq',
-            'child0': {
-              '_hash': 'J9DWPP6vhXvqJ1txvk1F1n',
-              'ref': {'_hash': '5Dq88zdSRIOcAS-WM_lYYt', 'key': 'value'},
-            },
-            'child2': {
-              'b': '/5Dq88zdSRIOcAS-WM_lYYt/J9DWPP6vhXvqJ1txvk1F1n',
-              '_hash': 'LoOEAbAbJkq2HR0zn2fayc',
-            },
-            '/J9DWPP6vhXvqJ1txvk1F1n/5Dq88zdSRIOcAS-WM_lYYt': {
-              'a': 5,
-              '_hash': 'sugxnSwo3OC4Png24DZ1Dw',
-            },
+            final updateHashes = UpdateHashes(json: json);
+            updateHashes.apply();
+            final uj = updateHashes.updatedJson;
+            expect(uj, {
+              '_hash': 'mRHgTEhgWEy0g27nquOzxq',
+              'child0': {
+                '_hash': 'J9DWPP6vhXvqJ1txvk1F1n',
+                'ref': {'_hash': '5Dq88zdSRIOcAS-WM_lYYt', 'key': 'value'},
+              },
+              'child2': {
+                'b': '/5Dq88zdSRIOcAS-WM_lYYt/J9DWPP6vhXvqJ1txvk1F1n',
+                '_hash': 'LoOEAbAbJkq2HR0zn2fayc',
+              },
+              '/J9DWPP6vhXvqJ1txvk1F1n/5Dq88zdSRIOcAS-WM_lYYt': {
+                'a': 5,
+                '_hash': 'sugxnSwo3OC4Png24DZ1Dw',
+              },
+            });
+          });
+
+          test('delimited by :', () {
+            const json = {
+              '_hash': 'ROOT',
+              'child0': {
+                '_hash': 'CHILD0',
+                'ref': {
+                  '_hash': 'CHILD1',
+                  'key': 'value',
+                },
+              },
+              ':CHILD0:CHILD1': {
+                'a': 5,
+              },
+              'child2': {
+                'b': ':CHILD1:CHILD0',
+              },
+            };
+
+            final updateHashes = UpdateHashes(json: json);
+            updateHashes.apply();
+            final uj = updateHashes.updatedJson;
+            expect(uj, {
+              '_hash': '-eI585GkWNj79UAnrKkQfI',
+              'child0': {
+                '_hash': 'J9DWPP6vhXvqJ1txvk1F1n',
+                'ref': {'_hash': '5Dq88zdSRIOcAS-WM_lYYt', 'key': 'value'},
+              },
+              'child2': {
+                'b': ':5Dq88zdSRIOcAS-WM_lYYt:J9DWPP6vhXvqJ1txvk1F1n',
+                '_hash': 'GSbLchOIE7Kaac2WAmUxqu',
+              },
+              ':J9DWPP6vhXvqJ1txvk1F1n:5Dq88zdSRIOcAS-WM_lYYt': {
+                'a': 5,
+                '_hash': 'sugxnSwo3OC4Png24DZ1Dw',
+              },
+            });
+          });
+
+          test('delimited by : and /', () {
+            const json = {
+              '_hash': 'ROOT',
+              'child0': {
+                '_hash': 'CHILD0',
+                'ref': {
+                  '_hash': 'CHILD1',
+                  'key': 'value',
+                },
+              },
+              '/CHILD0:CHILD1': {
+                'a': 5,
+              },
+              'child2': {
+                'b': ':CHILD1/CHILD0',
+              },
+            };
+
+            final updateHashes = UpdateHashes(json: json);
+            updateHashes.apply();
+            final uj = updateHashes.updatedJson;
+            expect(uj, {
+              '_hash': '_snIhEY3on5kr0oHJ1m94s',
+              'child0': {
+                '_hash': 'J9DWPP6vhXvqJ1txvk1F1n',
+                'ref': {'_hash': '5Dq88zdSRIOcAS-WM_lYYt', 'key': 'value'},
+              },
+              'child2': {
+                'b': ':5Dq88zdSRIOcAS-WM_lYYt/J9DWPP6vhXvqJ1txvk1F1n',
+                '_hash': 'asj8b1uU1Se-d8txkshOFA',
+              },
+              '/J9DWPP6vhXvqJ1txvk1F1n:5Dq88zdSRIOcAS-WM_lYYt': {
+                'a': 5,
+                '_hash': 'sugxnSwo3OC4Png24DZ1Dw',
+              },
+            });
           });
         });
       });
