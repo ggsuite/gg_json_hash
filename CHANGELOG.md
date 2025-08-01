@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- BREAKING CHANGE: Replace NumberConfig by an option called `roundDoubles`
+- IMPORTANT: By default similiar double values get same hashes.
+- The precision depends on the size of the double values and is aligned
+  to 32Bit floating point precision.
+
 ## [3.0.1] - 2025-06-03
 
 ### Changed
@@ -153,6 +162,7 @@
 
 - Increase version
 
+[Unreleased]: https://github.com/inlavigo/gg_json_hash/compare/3.0.1...HEAD
 [3.0.1]: https://github.com/inlavigo/gg_json_hash/compare/3.0.0...3.0.1
 [3.0.0]: https://github.com/inlavigo/gg_json_hash/compare/2.0.15...3.0.0
 [2.0.15]: https://github.com/inlavigo/gg_json_hash/compare/2.0.14...2.0.15

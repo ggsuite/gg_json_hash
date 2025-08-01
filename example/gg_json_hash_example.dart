@@ -29,23 +29,6 @@ void main() {
   print(const JsonEncoder.withIndent('  ').convert(json));
 
   // ...........................................................................
-  print('Set a maximum floating point precision.');
-
-  final config = HashConfig(
-    numberConfig: NumberHashingConfig.defaultConfig.copyWith(precision: 0.001),
-  );
-
-  jh = JsonHash(config: config);
-
-  try {
-    jh.apply({
-      'a': 1.000001,
-    });
-  } catch (e) {
-    print(e.toString()); // Number 1.000001 has a higher precision than 0.001
-  }
-
-  // ...........................................................................
   print('Use the "inPlace" option to modify the input object directly.');
 
   json = {'a': 1, 'b': 2};
