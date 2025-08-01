@@ -173,6 +173,64 @@ void main() {
       jh = JsonHash.defaultInstance;
     });
 
+    group('copyWith', () {
+      test('returns a new instance with updated config', () {
+        const config = HashConfig(hashLength: 10, roundDoubles: false);
+        final newJh = jh.copyWith(config: config);
+        expect(newJh.config.hashLength, equals(10));
+        expect(newJh.config.roundDoubles, isFalse);
+        expect(newJh.config.hashAlgorithm, equals('SHA-256'));
+      });
+
+      test(
+          'returns a new instance with default config when no config is passed',
+          () {
+        final newJh = jh.copyWith();
+        expect(
+          newJh.config.hashLength,
+          equals(HashConfig.defaultConfig.hashLength),
+        );
+        expect(
+          newJh.config.roundDoubles,
+          equals(HashConfig.defaultConfig.roundDoubles),
+        );
+        expect(
+          newJh.config.hashAlgorithm,
+          equals(HashConfig.defaultConfig.hashAlgorithm),
+        );
+      });
+
+      test('does not mutate the original JsonHash instance', () {
+        const config = HashConfig(hashLength: 5, roundDoubles: false);
+        final newJh = jh.copyWith(config: config);
+        expect(jh.config.hashLength, isNot(equals(newJh.config.hashLength)));
+        expect(
+          jh.config.roundDoubles,
+          isNot(equals(newJh.config.roundDoubles)),
+        );
+      });
+
+      test('copyWith preserves other config fields if not provided', () {
+        const config = HashConfig(hashLength: 15, hashAlgorithm: 'SHA-512');
+        final newConfig = config.copyWith(roundDoubles: false);
+        expect(newConfig.hashLength, equals(15));
+        expect(newConfig.hashAlgorithm, equals('SHA-512'));
+        expect(newConfig.roundDoubles, isFalse);
+      });
+
+      test('copyWith changes only specified fields', () {
+        const config = HashConfig(
+          hashLength: 22,
+          hashAlgorithm: 'SHA-256',
+          roundDoubles: true,
+        );
+        final updated = config.copyWith(hashLength: 30);
+        expect(updated.hashLength, equals(30));
+        expect(updated.hashAlgorithm, equals('SHA-256'));
+        expect(updated.roundDoubles, isTrue);
+      });
+    });
+
     group('apply(json)', () {
       group('adds correct hashes to', () {
         group('simple json', () {
@@ -433,6 +491,75 @@ void main() {
             });
           });
         });
+
+        group('data with floating point rounding issues', () {
+          group('with smartRoundDoubles', () {
+            group('true', () {
+              group('rounds floating point numbers depending on size', () {
+                test('i.e. small numbers', () {
+                  final json0 = jh.apply({
+                    'key': 0.0123456789,
+                  });
+
+                  final json1 = jh.apply({
+                    'key': 0.0123456788,
+                  });
+
+                  expect(json0['_hash'], json1['_hash']);
+                });
+
+                test('i.e. large numbers', () {
+                  final json0 = jh.apply({
+                    'key': 1234567890.1,
+                  });
+
+                  final json1 = jh.apply({
+                    'key': 1234567890.2,
+                  });
+
+                  expect(json0['_hash'], json1['_hash']);
+                });
+              });
+            });
+
+            group('false', () {
+              group('does not round floating point numbers depending on size',
+                  () {
+                setUp(() {
+                  jh = jh.copyWith(
+                    config: jh.config.copyWith(
+                      roundDoubles: false,
+                    ),
+                  );
+                });
+
+                test('i.e. small numbers', () {
+                  final json0 = jh.apply({
+                    'key': 0.0123456789,
+                  });
+
+                  final json1 = jh.apply({
+                    'key': 0.0123456788,
+                  });
+
+                  expect(json0['_hash'], isNot(json1['_hash']));
+                });
+
+                test('i.e. large numbers', () {
+                  final json0 = jh.apply({
+                    'key': 1234567890.1,
+                  });
+
+                  final json1 = jh.apply({
+                    'key': 1234567890.2,
+                  });
+
+                  expect(json0['_hash'], isNot(json1['_hash']));
+                });
+              });
+            });
+          });
+        });
       });
 
       group('writes the hashes directly into the given json', () {
@@ -640,203 +767,6 @@ void main() {
               });
             },
           );
-
-          group(
-            'i.e. it does throw when numbers do not match maximum precision',
-            () {
-              group('e.g. numbers have more commas then precision allows', () {
-                test('e.g. 1.0001', () {
-                  expect(jh.config.numberConfig.precision, equals(0.001));
-
-                  String message = '';
-                  try {
-                    jh.apply({
-                      'key': 1.0001,
-                    });
-                  } catch (e) {
-                    message = e.toString();
-                  }
-
-                  expect(
-                    message,
-                    equals(
-                      'Exception: Number 1.0001 has a higher precision '
-                      'than 0.001.',
-                    ),
-                  );
-                });
-
-                test('e.g. 1.1234', () {
-                  expect(jh.config.numberConfig.precision, equals(0.001));
-
-                  String message = '';
-                  try {
-                    jh.apply({
-                      'key': 1.1234,
-                    });
-                  } catch (e) {
-                    message = e.toString();
-                  }
-
-                  expect(
-                    message,
-                    equals(
-                      'Exception: Number 1.1234 has a higher precision '
-                      'than 0.001.',
-                    ),
-                  );
-                });
-
-                test('e.g. -1.0001', () {
-                  expect(jh.config.numberConfig.precision, equals(0.001));
-
-                  String message = '';
-                  try {
-                    jh.apply({
-                      'key': -1.0001,
-                    });
-                  } catch (e) {
-                    message = e.toString();
-                  }
-
-                  expect(
-                    message,
-                    equals(
-                      'Exception: Number -1.0001 has a higher precision '
-                      'than 0.001.',
-                    ),
-                  );
-                });
-
-                test('e.g. -1.1234', () {
-                  expect(jh.config.numberConfig.precision, equals(0.001));
-
-                  String message = '';
-                  try {
-                    jh.apply({
-                      'key': -1.1234,
-                    });
-                  } catch (e) {
-                    message = e.toString();
-                  }
-
-                  expect(
-                    message,
-                    equals(
-                      'Exception: Number -1.1234 has a higher precision '
-                      'than 0.001.',
-                    ),
-                  );
-                });
-
-                test('e.g. 9839089403.1235', () {
-                  expect(jh.config.numberConfig.precision, equals(0.001));
-
-                  String message = '';
-                  try {
-                    jh.apply({
-                      'key': 9839089403.1235,
-                    });
-                  } catch (e) {
-                    message = e.toString();
-                  }
-
-                  expect(
-                    message,
-                    equals(
-                      'Exception: Number 9839089403.1235 has a higher '
-                      'precision than 0.001.',
-                    ),
-                  );
-                });
-
-                test('e.g. 9839089403.1235', () {
-                  expect(jh.config.numberConfig.precision, equals(0.001));
-
-                  String message = '';
-                  try {
-                    jh.apply({
-                      'key': 0.1e-4,
-                    });
-                  } catch (e) {
-                    message = e.toString();
-                  }
-
-                  expect(
-                    message,
-                    equals(
-                      'Exception: Number 0.00001 has a higher precision '
-                      'than 0.001.',
-                    ),
-                  );
-                });
-              });
-            },
-          );
-        });
-
-        group('i.e. ensures numbers are in the given range', () {
-          group('i.e. values exceed NumbersConfig.maxNum', () {
-            late double max;
-
-            setUp(() {
-              max = jh.config.numberConfig.maxNum;
-            });
-
-            void check(double val) {
-              String message = '';
-              val = double.parse(val.toStringAsFixed(3));
-
-              try {
-                jh.apply({'key': val});
-              } catch (e) {
-                message = e.toString();
-              }
-
-              expect(
-                message,
-                equals(
-                  'Exception: Number $val exceeds '
-                  'NumberHashingConfig.maxNum.',
-                ),
-              );
-            }
-
-            test('.e.g. shortly above the maximum', () {
-              check(max + 0.001);
-            });
-          });
-
-          group('i.e. values exceed NumbersConfig.maxNum', () {
-            late double min;
-
-            setUp(() {
-              min = jh.config.numberConfig.minNum;
-            });
-
-            void check(double val) {
-              String message = '';
-              val = double.parse(val.toStringAsFixed(3));
-
-              try {
-                jh.apply({'key': val});
-              } catch (e) {
-                message = e.toString();
-              }
-
-              expect(
-                message,
-                equals(
-                  'Exception: Number $val is smaller '
-                  'NumberHashingConfig.minNum.',
-                ),
-              );
-            }
-
-            test('.e.g. shortly above the maximum', () {
-              check(min - 0.001);
-            });
-          });
         });
       });
 
@@ -1469,30 +1399,6 @@ void main() {
               'W4CAuZT_tIicr6crbn6LA8',
             ),
           );
-        });
-      });
-    });
-
-    group('NumberHashingConfig', () {
-      group('copyWith', () {
-        test('no params changed', () {
-          const nc = NumberHashingConfig();
-          final nc2 = nc.copyWith();
-          expect(nc.maxNum, equals(nc2.maxNum));
-          expect(nc.minNum, equals(nc2.minNum));
-          expect(nc.precision, equals(nc2.precision));
-        });
-
-        test('with all parameters changed', () {
-          const nc = NumberHashingConfig();
-          final nc2 = nc.copyWith(
-            maxNum: 100,
-            minNum: -100,
-            precision: 0.1,
-          );
-          expect(nc2.maxNum, equals(100));
-          expect(nc2.minNum, equals(-100));
-          expect(nc2.precision, equals(0.1));
         });
       });
     });

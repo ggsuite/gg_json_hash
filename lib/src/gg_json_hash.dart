@@ -5,56 +5,9 @@
 // found in the LICENSE file in the root of this package.
 
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:crypto/crypto.dart';
-
-// .............................................................................
-/// Number config for hashing.
-///
-/// We need to make sure that the hashing of numbers is consistent
-/// across different platforms. Especially rounding errors can lead to
-/// different hashes although the numbers are considered equal. This
-/// class provides a configuration for hashing numbers.
-class NumberHashingConfig {
-  /// Constructor
-  const NumberHashingConfig({
-    this.precision = 0.001,
-    this.maxNum = 1000 * 1000 * 1000,
-    this.minNum = -1000 * 1000 * 1000,
-    this.throwOnRangeError = true,
-  });
-
-  /// Precision for hashing numbers.
-  final double precision;
-
-  /// Maximum number for hashing.
-  final double maxNum;
-
-  /// Minimum number for hashing.
-  final double minNum;
-
-  /// Throw an error if a number is out of range.
-  final bool throwOnRangeError;
-
-  /// Default configuration.
-  static const NumberHashingConfig defaultConfig = NumberHashingConfig();
-
-  /// Creates a copy of the current NumberHashingConfig
-  /// with optional new values.
-  NumberHashingConfig copyWith({
-    double? precision,
-    double? maxNum,
-    double? minNum,
-    bool? throwOnRangeError,
-  }) {
-    return NumberHashingConfig(
-      precision: precision ?? this.precision,
-      maxNum: maxNum ?? this.maxNum,
-      minNum: minNum ?? this.minNum,
-      throwOnRangeError: throwOnRangeError ?? this.throwOnRangeError,
-    );
-  }
-}
 
 // .............................................................................
 /// Options for the JSON hash.
@@ -63,7 +16,7 @@ class HashConfig {
   const HashConfig({
     this.hashLength = 22,
     this.hashAlgorithm = 'SHA-256',
-    this.numberConfig = NumberHashingConfig.defaultConfig,
+    this.roundDoubles = true,
   });
 
   /// Length of the hash.
@@ -72,11 +25,26 @@ class HashConfig {
   /// Algorithm for hashing.
   final String hashAlgorithm;
 
-  /// Configuration for hashing numbers.
-  final NumberHashingConfig numberConfig;
+  /// If smart rounding is enabled, double value are smartly rounded.
+  /// This avoids different hashes for similar values
+  /// (e.g., 1.0000001 and 1.0000002).
+  final bool roundDoubles;
 
   /// Default configuration.
   static const HashConfig defaultConfig = HashConfig();
+
+  /// Returns a copy of this config with the given fields replaced.
+  HashConfig copyWith({
+    int? hashLength,
+    String? hashAlgorithm,
+    bool? roundDoubles,
+  }) {
+    return HashConfig(
+      hashLength: hashLength ?? this.hashLength,
+      hashAlgorithm: hashAlgorithm ?? this.hashAlgorithm,
+      roundDoubles: roundDoubles ?? this.roundDoubles,
+    );
+  }
 }
 
 // .............................................................................
@@ -110,6 +78,16 @@ class JsonHash {
       validate(copy);
     }
     return copy;
+  }
+
+  // ...........................................................................
+  /// Returns a copy of this instance with the given fields replaced.
+  JsonHash copyWith({
+    HashConfig? config,
+  }) {
+    return JsonHash(
+      config: config ?? this.config,
+    );
   }
 
   // ...........................................................................
@@ -332,14 +310,37 @@ class JsonHash {
     if (value is String) {
       return value;
     }
-    if (value is num) {
-      _checkNumber(value);
 
+    if (value is double) {
+      if (value.isNaN) {
+        throw Exception('NaN is not supported.');
+      }
+
+      // Treat double values as integers if they are whole numbers
       if (value.toInt() == value) {
         return value.toInt();
       }
 
+      // Round the value if configured to do so
+      else if (config.roundDoubles) {
+        return _smartRound(value);
+      } else {
+        return value;
+      }
+    }
+
+    // Handle int values
+    else if (value is int) {
       return value;
+    }
+
+    // Handle non double and non int numbers
+    else if (value is num) {
+      // coverage:ignore-start
+      throw UnimplementedError(
+        'Number is not double and not int. Please implement this case.',
+      );
+      // coverage:ignore-end
     } else if (value is bool) {
       return value;
     } else {
@@ -507,48 +508,30 @@ class JsonHash {
   }
 
   // ...........................................................................
-  /// Turns a number into a string with a given precision.
-  void _checkNumber(num value) {
-    if (value.isNaN) {
-      throw Exception('NaN is not supported.');
+  double _smartRound(double value) {
+    final absVal = value.abs();
+
+    int digits;
+    if (absVal < 1) {
+      digits = 6;
+    } else if (absVal < 10) {
+      digits = 6;
+    } else if (absVal < 100) {
+      digits = 5;
+    } else if (absVal < 1000) {
+      digits = 4;
+    } else if (absVal < 10000) {
+      digits = 3;
+    } else if (absVal < 100000) {
+      digits = 2;
+    } else if (absVal < 1000000) {
+      digits = 1;
+    } else {
+      digits = 0;
     }
 
-    if (value is int) {
-      return;
-    }
-
-    if (_exceedsPrecision(value)) {
-      throw Exception('Number $value has a higher precision than 0.001.');
-    }
-
-    if (_exceedsUpperRange(value)) {
-      throw Exception('Number $value exceeds NumberHashingConfig.maxNum.');
-    }
-
-    if (_exceedsLowerRange(value)) {
-      throw Exception('Number $value is smaller NumberHashingConfig.minNum.');
-    }
-  }
-
-  // ...........................................................................
-  /// Checks if a number exceeds the defined range.
-  bool _exceedsUpperRange(num value) {
-    return value > config.numberConfig.maxNum;
-  }
-
-  // ...........................................................................
-  /// Checks if a number exceeds the defined range.
-  bool _exceedsLowerRange(num value) {
-    return value < config.numberConfig.minNum;
-  }
-
-  // ...........................................................................
-  /// Checks if a number exceeds the precision.
-  bool _exceedsPrecision(num value) {
-    final precision = config.numberConfig.precision;
-    final roundedValue = (value / precision).round() * precision;
-    const epsilon = 2.220446049250313e-16;
-    return (value - roundedValue).abs() > epsilon;
+    final factor = pow(10, digits);
+    return (value * factor).round() / factor;
   }
 
   // ...........................................................................
