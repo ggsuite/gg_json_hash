@@ -82,12 +82,8 @@ class JsonHash {
 
   // ...........................................................................
   /// Returns a copy of this instance with the given fields replaced.
-  JsonHash copyWith({
-    HashConfig? config,
-  }) {
-    return JsonHash(
-      config: config ?? this.config,
-    );
+  JsonHash copyWith({HashConfig? config}) {
+    return JsonHash(config: config ?? this.config);
   }
 
   // ...........................................................................
@@ -320,7 +316,6 @@ class JsonHash {
       if (value.toInt() == value) {
         return value.toInt();
       }
-
       // Round the value if configured to do so
       else if (config.roundDoubles) {
         return _smartRound(value);
@@ -328,12 +323,10 @@ class JsonHash {
         return value;
       }
     }
-
     // Handle int values
     else if (value is int) {
       return value;
     }
-
     // Handle non double and non int numbers
     else if (value is num) {
       // coverage:ignore-start
@@ -432,10 +425,7 @@ class JsonHash {
     return true;
   }
 
-  static bool _areEqualList(
-    List<dynamic> a,
-    List<dynamic> b,
-  ) {
+  static bool _areEqualList(List<dynamic> a, List<dynamic> b) {
     if (a.length != b.length) {
       return false;
     }
@@ -563,8 +553,10 @@ class JsonHash {
     for (var i = 0; i < sortedKeys.length; i++) {
       final key = sortedKeys[i];
       bool isLast = i == sortedKeys.length - 1;
-      result.add('"$key":'
-          '${encodeValue(map[key])}');
+      result.add(
+        '"$key":'
+        '${encodeValue(map[key])}',
+      );
       if (!isLast) result.add(',');
     }
     result.add('}');

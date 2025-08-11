@@ -183,22 +183,23 @@ void main() {
       });
 
       test(
-          'returns a new instance with default config when no config is passed',
-          () {
-        final newJh = jh.copyWith();
-        expect(
-          newJh.config.hashLength,
-          equals(HashConfig.defaultConfig.hashLength),
-        );
-        expect(
-          newJh.config.roundDoubles,
-          equals(HashConfig.defaultConfig.roundDoubles),
-        );
-        expect(
-          newJh.config.hashAlgorithm,
-          equals(HashConfig.defaultConfig.hashAlgorithm),
-        );
-      });
+        'returns a new instance with default config when no config is passed',
+        () {
+          final newJh = jh.copyWith();
+          expect(
+            newJh.config.hashLength,
+            equals(HashConfig.defaultConfig.hashLength),
+          );
+          expect(
+            newJh.config.roundDoubles,
+            equals(HashConfig.defaultConfig.roundDoubles),
+          );
+          expect(
+            newJh.config.hashAlgorithm,
+            equals(HashConfig.defaultConfig.hashAlgorithm),
+          );
+        },
+      );
 
       test('does not mutate the original JsonHash instance', () {
         const config = HashConfig(hashLength: 5, roundDoubles: false);
@@ -267,16 +268,13 @@ void main() {
               expect(json['_hash'], equals('dNkCrIe79x2dPyf5fywwYO'));
             });
 
-            test(
-              'with a null value',
-              () {
-                final json = jh.apply({'key': null, '_hash': ''});
-                expect(json['key'], null);
-                final expectedHash = jh.calcHash('{"key":null}');
-                expect(json['_hash'], expectedHash);
-                expect(json['_hash'], 'BZwS6bAVtKxSW0AW5y8ANk');
-              },
-            );
+            test('with a null value', () {
+              final json = jh.apply({'key': null, '_hash': ''});
+              expect(json['key'], null);
+              final expectedHash = jh.calcHash('{"key":null}');
+              expect(json['_hash'], expectedHash);
+              expect(json['_hash'], 'BZwS6bAVtKxSW0AW5y8ANk');
+            });
 
             test('with an array with null values', () {
               final json = jh.apply({
@@ -290,13 +288,10 @@ void main() {
           });
 
           test('existing _hash should be overwritten', () {
-            final json = jh.apply(
-              {
-                'key': 'value',
-                '_hash': 'oldHash',
-              },
-              throwOnWrongHashes: false,
-            );
+            final json = jh.apply({
+              'key': 'value',
+              '_hash': 'oldHash',
+            }, throwOnWrongHashes: false);
             expect(json['key'], equals('value'));
             final expectedHash = jh.calcHash('{"key":"value"}');
             expect(json['_hash'], equals(expectedHash));
@@ -304,17 +299,9 @@ void main() {
           });
 
           group('containing three key value pairs', () {
-            final json0 = {
-              'a': 'value',
-              'b': 1.0,
-              'c': true,
-            };
+            final json0 = {'a': 'value', 'b': 1.0, 'c': true};
 
-            final json1 = {
-              'b': 1.0,
-              'a': 'value',
-              'c': true,
-            };
+            final json1 = {'b': 1.0, 'a': 'value', 'c': true};
 
             late Map<String, dynamic> j0;
             late Map<String, dynamic> j1;
@@ -343,9 +330,7 @@ void main() {
           test('of level 1', () {
             final parent = jh.apply({
               'key': 'value',
-              'child': {
-                'key': 'value',
-              },
+              'child': {'key': 'value'},
             });
 
             final child = parent['child'];
@@ -364,9 +349,7 @@ void main() {
               'key': 'value',
               'child': {
                 'key': 'value',
-                'grandChild': {
-                  'key': 'value',
-                },
+                'grandChild': {'key': 'value'},
               },
             });
 
@@ -391,8 +374,9 @@ void main() {
           final json = jsonDecode(exampleJson) as Map<String, dynamic>;
           final hashedJson = jh.apply(json);
 
-          final hashedJsonString =
-              const JsonEncoder.withIndent('  ').convert(hashedJson);
+          final hashedJsonString = const JsonEncoder.withIndent(
+            '  ',
+          ).convert(hashedJson);
           expect(hashedJsonString, equals(exampleJsonWithHashes));
         });
 
@@ -497,25 +481,17 @@ void main() {
             group('true', () {
               group('rounds floating point numbers depending on size', () {
                 test('i.e. small numbers', () {
-                  final json0 = jh.apply({
-                    'key': 0.0123456789,
-                  });
+                  final json0 = jh.apply({'key': 0.0123456789});
 
-                  final json1 = jh.apply({
-                    'key': 0.0123456788,
-                  });
+                  final json1 = jh.apply({'key': 0.0123456788});
 
                   expect(json0['_hash'], json1['_hash']);
                 });
 
                 test('i.e. large numbers', () {
-                  final json0 = jh.apply({
-                    'key': 1234567890.1,
-                  });
+                  final json0 = jh.apply({'key': 1234567890.1});
 
-                  final json1 = jh.apply({
-                    'key': 1234567890.2,
-                  });
+                  final json1 = jh.apply({'key': 1234567890.2});
 
                   expect(json0['_hash'], json1['_hash']);
                 });
@@ -523,40 +499,32 @@ void main() {
             });
 
             group('false', () {
-              group('does not round floating point numbers depending on size',
-                  () {
-                setUp(() {
-                  jh = jh.copyWith(
-                    config: jh.config.copyWith(
-                      roundDoubles: false,
-                    ),
-                  );
-                });
-
-                test('i.e. small numbers', () {
-                  final json0 = jh.apply({
-                    'key': 0.0123456789,
+              group(
+                'does not round floating point numbers depending on size',
+                () {
+                  setUp(() {
+                    jh = jh.copyWith(
+                      config: jh.config.copyWith(roundDoubles: false),
+                    );
                   });
 
-                  final json1 = jh.apply({
-                    'key': 0.0123456788,
+                  test('i.e. small numbers', () {
+                    final json0 = jh.apply({'key': 0.0123456789});
+
+                    final json1 = jh.apply({'key': 0.0123456788});
+
+                    expect(json0['_hash'], isNot(json1['_hash']));
                   });
 
-                  expect(json0['_hash'], isNot(json1['_hash']));
-                });
+                  test('i.e. large numbers', () {
+                    final json0 = jh.apply({'key': 1234567890.1});
 
-                test('i.e. large numbers', () {
-                  final json0 = jh.apply({
-                    'key': 1234567890.1,
+                    final json1 = jh.apply({'key': 1234567890.2});
+
+                    expect(json0['_hash'], isNot(json1['_hash']));
                   });
-
-                  final json1 = jh.apply({
-                    'key': 1234567890.2,
-                  });
-
-                  expect(json0['_hash'], isNot(json1['_hash']));
-                });
-              });
+                },
+              );
             });
           });
         });
@@ -565,17 +533,12 @@ void main() {
       group('writes the hashes directly into the given json', () {
         group('when ApplyJsonHashConfig.inPlace is true', () {
           test('writes hashes into original json', () {
-            final json = {
-              'key': 'value',
-            };
+            final json = {'key': 'value'};
 
             final hashedJson = jh.apply(json, inPlace: true);
             expect(
               hashedJson,
-              equals({
-                'key': 'value',
-                '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
-              }),
+              equals({'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'}),
             );
 
             expect(json, equals(hashedJson));
@@ -586,135 +549,119 @@ void main() {
       group('writes the hashes into a copy', () {
         group('when ApplyJsonHashConfig.inPlace is false', () {
           test('does not touch the original object', () {
-            final json = {
-              'key': 'value',
-            };
+            final json = {'key': 'value'};
 
             // The returned copy has the hashes
             final hashedJson = jh.apply(json, inPlace: false);
             expect(
               hashedJson,
-              equals({
-                'key': 'value',
-                '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
-              }),
+              equals({'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'}),
             );
 
             // The original json is untouched
-            expect(
-              json,
-              equals({
-                'key': 'value',
-              }),
-            );
+            expect(json, equals({'key': 'value'}));
           });
         });
       });
 
       group('replaces/updates existing hashes', () {
-        group('when ApplyJsonHashConfig.updateExistingHashes is set to true',
-            () {
-          bool allHashesChanged(Map<String, dynamic> json) {
-            return json['a']['_hash'] != 'hash_a' &&
-                json['a']['b']['_hash'] != 'hash_b' &&
-                json['a']['b']['c']['_hash'] != 'hash_c';
-          }
+        group(
+          'when ApplyJsonHashConfig.updateExistingHashes is set to true',
+          () {
+            bool allHashesChanged(Map<String, dynamic> json) {
+              return json['a']['_hash'] != 'hash_a' &&
+                  json['a']['b']['_hash'] != 'hash_b' &&
+                  json['a']['b']['c']['_hash'] != 'hash_c';
+            }
 
-          test('should recalculate existing hashes', () {
-            final json = <String, dynamic>{
-              'a': {
-                '_hash': 'hash_a',
-                'b': {
-                  '_hash': 'hash_b',
-                  'c': {
-                    '_hash': 'hash_c',
-                    'd': 'value',
+            test('should recalculate existing hashes', () {
+              final json = <String, dynamic>{
+                'a': {
+                  '_hash': 'hash_a',
+                  'b': {
+                    '_hash': 'hash_b',
+                    'c': {'_hash': 'hash_c', 'd': 'value'},
                   },
                 },
-              },
-            };
+              };
 
-            jh.apply(
-              json,
-              inPlace: true,
-              throwOnWrongHashes: false,
-            );
-            expect(allHashesChanged(json), isTrue);
-          });
-        });
+              jh.apply(json, inPlace: true, throwOnWrongHashes: false);
+              expect(allHashesChanged(json), isTrue);
+            });
+          },
+        );
       });
 
       group('does not touch existing hashes', () {
-        group('when ApplyJsonHashConfig.updateExistingHashes is set to false',
-            () {
-          late Map<String, dynamic> json;
+        group(
+          'when ApplyJsonHashConfig.updateExistingHashes is set to false',
+          () {
+            late Map<String, dynamic> json;
 
-          bool noHashesChanged() {
-            return json['a']['_hash'] == 'hash_a' &&
-                json['a']['b']['_hash'] == 'hash_b' &&
-                json['a']['b']['c']['_hash'] == 'hash_c';
-          }
+            bool noHashesChanged() {
+              return json['a']['_hash'] == 'hash_a' &&
+                  json['a']['b']['_hash'] == 'hash_b' &&
+                  json['a']['b']['c']['_hash'] == 'hash_c';
+            }
 
-          setUp(() {
-            json = {
-              'a': {
-                '_hash': 'hash_a',
-                'b': {
-                  '_hash': 'hash_b',
-                  'c': {
-                    '_hash': 'hash_c',
-                    'd': 'value',
+            setUp(() {
+              json = {
+                'a': {
+                  '_hash': 'hash_a',
+                  'b': {
+                    '_hash': 'hash_b',
+                    'c': {'_hash': 'hash_c', 'd': 'value'},
                   },
                 },
-              },
-            };
-          });
+              };
+            });
 
-          List<String> changedHashes() {
-            final result = <String>[];
-            if (json['a']['_hash'] != 'hash_a') {
-              result.add('a');
+            List<String> changedHashes() {
+              final result = <String>[];
+              if (json['a']['_hash'] != 'hash_a') {
+                result.add('a');
+              }
+
+              if (json['a']['b']['_hash'] != 'hash_b') {
+                result.add('b');
+              }
+
+              if (json['a']['b']['c']['_hash'] != 'hash_c') {
+                result.add('c');
+              }
+
+              return result;
             }
 
-            if (json['a']['b']['_hash'] != 'hash_b') {
-              result.add('b');
-            }
+            test('with all objects having hashes', () {
+              jh.apply(
+                json,
+                updateExistingHashes: false,
+                throwOnWrongHashes: false,
+              );
+              expect(noHashesChanged(), isTrue);
+            });
 
-            if (json['a']['b']['c']['_hash'] != 'hash_c') {
-              result.add('c');
-            }
+            test('with parents have no hashes', () {
+              json['a'].remove('_hash');
+              jh.apply(
+                json,
+                updateExistingHashes: false,
+                throwOnWrongHashes: false,
+              );
+              expect(changedHashes(), equals(['a']));
 
-            return result;
-          }
-
-          test('with all objects having hashes', () {
-            jh.apply(
-              json,
-              updateExistingHashes: false,
-              throwOnWrongHashes: false,
-            );
-            expect(noHashesChanged(), isTrue);
-          });
-
-          test('with parents have no hashes', () {
-            json['a'].remove('_hash');
-            jh.apply(
-              json,
-              updateExistingHashes: false,
-              throwOnWrongHashes: false,
-            );
-            expect(changedHashes(), equals(['a']));
-
-            json['a'].remove('_hash');
-            json['a']['b'].remove('_hash');
-            jh.apply(
-              json,
-              updateExistingHashes: true,
-              throwOnWrongHashes: false,
-            );
-            expect(changedHashes(), equals(['a', 'b']));
-          });
-        });
+              json['a'].remove('_hash');
+              json['a']['b'].remove('_hash');
+              jh.apply(
+                json,
+                updateExistingHashes: true,
+                throwOnWrongHashes: false,
+              );
+              expect(changedHashes(), equals(['a', 'b']));
+            });
+          },
+        );
       });
 
       group('checks numbers', () {
@@ -722,9 +669,7 @@ void main() {
           String? message;
 
           try {
-            jh.apply({
-              'key': double.nan,
-            });
+            jh.apply({'key': double.nan});
           } catch (e) {
             message = e.toString();
           }
@@ -736,9 +681,7 @@ void main() {
           String? message;
 
           try {
-            jh.apply({
-              'key': Error(),
-            });
+            jh.apply({'key': Error()});
           } catch (e) {
             message = e.toString();
           }
@@ -770,57 +713,50 @@ void main() {
         });
       });
 
-      group('throws, when existing hashes do not match newly calculated ones',
-          () {
-        group('when ApplyJsonHashConfig.throwOnWrongHashes is set to true', () {
-          test('with a simple json', () {
-            final json = {
-              'key': 'value',
-              '_hash': 'wrongHash',
-            };
+      group(
+        'throws, when existing hashes do not match newly calculated ones',
+        () {
+          group(
+            'when ApplyJsonHashConfig.throwOnWrongHashes is set to true',
+            () {
+              test('with a simple json', () {
+                final json = {'key': 'value', '_hash': 'wrongHash'};
 
-            String message = '';
-            try {
-              jh.apply(json, throwOnWrongHashes: true);
-            } catch (e) {
-              message = e.toString();
-            }
+                String message = '';
+                try {
+                  jh.apply(json, throwOnWrongHashes: true);
+                } catch (e) {
+                  message = e.toString();
+                }
 
-            expect(
-              message,
-              equals(
-                'Exception: Hash "wrongHash" does not match the newly '
-                'calculated one "5Dq88zdSRIOcAS-WM_lYYt". '
-                'Please make sure that all systems are producing '
-                'the same hashes.',
-              ),
-            );
+                expect(
+                  message,
+                  equals(
+                    'Exception: Hash "wrongHash" does not match the newly '
+                    'calculated one "5Dq88zdSRIOcAS-WM_lYYt". '
+                    'Please make sure that all systems are producing '
+                    'the same hashes.',
+                  ),
+                );
+              });
+            },
+          );
+
+          group('but not when ApplyJsonHashConfig.throwOnWrongHashes '
+              'is set to false', () {
+            test('with a simple json', () {
+              final json = {'key': 'value', '_hash': 'wrongHash'};
+
+              jh.apply(json, throwOnWrongHashes: false, inPlace: true);
+              expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
+            });
           });
-        });
-
-        group(
-            'but not when ApplyJsonHashConfig.throwOnWrongHashes '
-            'is set to false', () {
-          test('with a simple json', () {
-            final json = {
-              'key': 'value',
-              '_hash': 'wrongHash',
-            };
-
-            jh.apply(
-              json,
-              throwOnWrongHashes: false,
-              inPlace: true,
-            );
-            expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
-          });
-        });
-      });
+        },
+      );
     });
 
     group('applyToJsonString(String)', () {
-      test(
-          'parses the string, adds the hashes, '
+      test('parses the string, adds the hashes, '
           'and returns the serialized string', () {
         const json = '{"key": "value"}';
         final jsonString = jh.applyToJsonString(json);
@@ -831,20 +767,14 @@ void main() {
     group('applyInPlace(json)', () {
       group('default', () {
         test('replaces empty hashes with the correct ones', () {
-          final json = {
-            'key': 'value',
-            '_hash': '',
-          };
+          final json = {'key': 'value', '_hash': ''};
 
           jh.applyInPlace(json);
           expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
         });
 
         test('throws when existing hashes are wrong', () {
-          final json = {
-            'key': 'value',
-            '_hash': 'wrongHash',
-          };
+          final json = {'key': 'value', '_hash': 'wrongHash'};
 
           String message = '';
           try {
@@ -880,11 +810,7 @@ void main() {
                 '_hash': '',
               },
               'actions': [
-                {
-                  'column': 'w',
-                  'setValue': 1111,
-                  '_hash': '',
-                },
+                {'column': 'w', 'setValue': 1111, '_hash': ''},
               ],
               '_hash': '',
             });
@@ -935,50 +861,54 @@ void main() {
 
       test('nested value', () {
         expect(
-            copyJson({
-              'a': {'b': 1},
-            }),
-            {
-              'a': {'b': 1},
-            });
+          copyJson({
+            'a': {'b': 1},
+          }),
+          {
+            'a': {'b': 1},
+          },
+        );
       });
 
       test('list value', () {
         expect(
-            copyJson({
-              'a': [1, 2],
-            }),
-            {
-              'a': [1, 2],
-            });
+          copyJson({
+            'a': [1, 2],
+          }),
+          {
+            'a': [1, 2],
+          },
+        );
       });
 
       test('list with list', () {
         expect(
-            copyJson({
-              'a': [
-                [1, 2],
-              ],
-            }),
-            {
-              'a': [
-                [1, 2],
-              ],
-            });
+          copyJson({
+            'a': [
+              [1, 2],
+            ],
+          }),
+          {
+            'a': [
+              [1, 2],
+            ],
+          },
+        );
       });
 
       test('list with map', () {
         expect(
-            copyJson({
-              'a': [
-                {'b': 1},
-              ],
-            }),
-            {
-              'a': [
-                {'b': 1},
-              ],
-            });
+          copyJson({
+            'a': [
+              {'b': 1},
+            ],
+          }),
+          {
+            'a': [
+              {'b': 1},
+            ],
+          },
+        );
       });
 
       group('throws', () {
@@ -1161,9 +1091,10 @@ void main() {
         group('does not throw', () {
           test('when hash is correct', () {
             expect(
-              () => jh.validate(
-                {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
-              ),
+              () => jh.validate({
+                'key': 'value',
+                '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
+              }),
               isNot(throwsA(anything)),
             );
           });
@@ -1178,10 +1109,7 @@ void main() {
             '_hash': 'oEE88mHZ241BRlAfyG8n9X',
             'parent': {
               '_hash': '3Wizz29YgTIc1LRaN9fNfK',
-              'child': {
-                'key': 'value',
-                '_hash': '5Dq88zdSRIOcAS-WM_lYYt',
-              },
+              'child': {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
             },
           };
         });
@@ -1393,12 +1321,7 @@ void main() {
             inPlace: true,
           );
 
-          expect(
-            json['_hash'],
-            equals(
-              'W4CAuZT_tIicr6crbn6LA8',
-            ),
-          );
+          expect(json['_hash'], equals('W4CAuZT_tIicr6crbn6LA8'));
         });
       });
     });
@@ -1406,10 +1329,7 @@ void main() {
 
   group('hip', () {
     test('Applies hashes in place', () {
-      final json = {
-        'key': 'value',
-        '_hash': '',
-      };
+      final json = {'key': 'value', '_hash': ''};
 
       hip(json);
       expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
@@ -1418,10 +1338,7 @@ void main() {
 
   group('hsh', () {
     test('Returns an object with hahes', () {
-      final json = {
-        'key': 'value',
-        '_hash': '',
-      };
+      final json = {'key': 'value', '_hash': ''};
 
       final result = hsh(json);
       expect(result, isA<Map<String, dynamic>>());

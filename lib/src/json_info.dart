@@ -10,7 +10,7 @@ import 'package:gg_json_hash/gg_json_hash.dart';
 class JsonInfo {
   /// Constructor
   JsonInfo({required Map<String, dynamic> json})
-      : json = JsonHash.copyJson(json) {
+    : json = JsonHash.copyJson(json) {
     _init();
   }
 
@@ -101,12 +101,7 @@ class JsonInfo {
 
     if (unequalAmbigiousHashes.isNotEmpty) {
       final hashes = ambigiousHashes.keys.map((e) => '  - $e');
-      throw Exception(
-        [
-          'Ambigious hashes detected:',
-          ...hashes,
-        ].join('\n'),
-      );
+      throw Exception(['Ambigious hashes detected:', ...hashes].join('\n'));
     }
   }
 
@@ -177,10 +172,7 @@ class JsonInfo {
   }
 
   // ...........................................................................
-  void _updateAmbigiousObjects(
-    Map<String, dynamic> newJson,
-    String hash,
-  ) {
+  void _updateAmbigiousObjects(Map<String, dynamic> newJson, String hash) {
     final existingJson = hashToObjects[hash];
 
     if (existingJson == null) {
@@ -274,10 +266,7 @@ class JsonInfo {
     }
   }
 
-  void _initSubChildDependencies(
-    String parentHash,
-    dynamic value,
-  ) {
+  void _initSubChildDependencies(String parentHash, dynamic value) {
     // Process dictionary
     if (value is Map<String, dynamic>) {
       final childHash = value['_hash'] as String;
@@ -286,15 +275,11 @@ class JsonInfo {
         _initSubChildDependencies(childHash, subVal);
       }
     }
-
     // Process list
     else if (value is List) {
       for (final item in value) {
         if (item is Map<String, dynamic> || item is List) {
-          _initSubChildDependencies(
-            parentHash,
-            item,
-          );
+          _initSubChildDependencies(parentHash, item);
         }
       }
     }

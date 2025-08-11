@@ -10,7 +10,7 @@ import 'package:gg_json_hash/gg_json_hash.dart';
 class UpdateHashes {
   /// Constructor
   UpdateHashes({required Map<String, dynamic> json})
-      : jsonInfo = JsonInfo(json: json);
+    : jsonInfo = JsonInfo(json: json);
 
   /// The json info as based for the update
   final JsonInfo jsonInfo;

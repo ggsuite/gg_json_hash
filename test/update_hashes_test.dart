@@ -14,18 +14,9 @@ void main() {
         test('when json data contains circular dependencies', () {
           final json = {
             '_hash': 'root',
-            'child0': {
-              '_hash': 'CHILD0',
-              'ref': 'CHILD1',
-            },
-            'child1': {
-              '_hash': 'CHILD1',
-              'ref': 'CHILD2',
-            },
-            'child2': {
-              '_hash': 'CHILD2',
-              'ref': 'CHILD0',
-            },
+            'child0': {'_hash': 'CHILD0', 'ref': 'CHILD1'},
+            'child1': {'_hash': 'CHILD1', 'ref': 'CHILD2'},
+            'child2': {'_hash': 'CHILD2', 'ref': 'CHILD0'},
           };
 
           var message = '';
@@ -48,14 +39,8 @@ void main() {
         test('when json data contains ambiguous hashes', () {
           final json = {
             '_hash': 'root',
-            'child0': {
-              '_hash': 'CHILD',
-              'key': 'a',
-            },
-            'child1': {
-              '_hash': 'CHILD',
-              'key': 'b',
-            },
+            'child0': {'_hash': 'CHILD', 'key': 'a'},
+            'child1': {'_hash': 'CHILD', 'key': 'b'},
           };
 
           final updateHashes = UpdateHashes(json: json);
@@ -68,10 +53,7 @@ void main() {
 
           expect(
             message,
-            [
-              'Exception: Ambigious hashes detected:',
-              '  - CHILD',
-            ].join('\n'),
+            ['Exception: Ambigious hashes detected:', '  - CHILD'].join('\n'),
           );
         });
       });
@@ -79,9 +61,7 @@ void main() {
       test('does nothing when hashes are already perfect', () {
         final json = hip({
           'a': '5',
-          'b': {
-            'c': '6',
-          },
+          'b': {'c': '6'},
         });
 
         final jsonUpdated = uh(json);
@@ -90,9 +70,7 @@ void main() {
 
       group('updates hashes and references in an object', () {
         test('that is empty', () {
-          const json = {
-            '_hash': 'ROOT',
-          };
+          const json = {'_hash': 'ROOT'};
 
           final uj = uh(json);
 
@@ -102,9 +80,7 @@ void main() {
         test('with one child', () {
           const json = {
             '_hash': 'ROOT',
-            'child0': {
-              '_hash': 'CHILD0',
-            },
+            'child0': {'_hash': 'CHILD0'},
           };
 
           final updateHashes = UpdateHashes(json: json);
@@ -121,17 +97,9 @@ void main() {
         test('with a references to other objects', () {
           const json = {
             '_hash': 'ROOT',
-            'child0': {
-              '_hash': 'CHILD0',
-              'ref': 'CHILD1',
-            },
-            'child1': {
-              '_hash': 'CHILD1',
-              'ref': 'CHILD2',
-            },
-            'child2': {
-              '_hash': 'CHILD2',
-            },
+            'child0': {'_hash': 'CHILD0', 'ref': 'CHILD1'},
+            'child1': {'_hash': 'CHILD1', 'ref': 'CHILD2'},
+            'child2': {'_hash': 'CHILD2'},
           };
 
           final updateHashes = UpdateHashes(json: json);
@@ -163,19 +131,14 @@ void main() {
                   {
                     '_hash': 'CHILD1',
                     'ref': [
-                      {
-                        '_hash': 'CHILD2',
-                      },
+                      {'_hash': 'CHILD2'},
                       'CHILD3',
                     ],
                   },
                 ],
               ],
             },
-            'child3': {
-              '_hash': 'CHILD3',
-              'key': 'VALUE',
-            },
+            'child3': {'_hash': 'CHILD3', 'key': 'VALUE'},
           };
 
           final updateHashes = UpdateHashes(json: json);
@@ -195,8 +158,8 @@ void main() {
                       {'_hash': 'RBNvo1WzZ4oRRq0W9-hknp'},
                       'JczQWaAeuCdYpXBHjbUNr_',
                     ],
-                  }
-                ]
+                  },
+                ],
               ],
             },
             'child3': {'_hash': 'JczQWaAeuCdYpXBHjbUNr_', 'key': 'VALUE'},
@@ -208,14 +171,8 @@ void main() {
             const json = {
               '_hash': 'ROOT',
               'array': [
-                {
-                  'key': 'value',
-                  '_hash': 'HASH',
-                },
-                {
-                  'key': 'value',
-                  '_hash': 'HASH',
-                },
+                {'key': 'value', '_hash': 'HASH'},
+                {'key': 'value', '_hash': 'HASH'},
               ],
             };
 
@@ -235,14 +192,8 @@ void main() {
             const json = {
               '_hash': 'ROOT',
               'array': [
-                {
-                  'key': 'value',
-                  '_hash': 'HASH0',
-                },
-                {
-                  'key': 'value',
-                  '_hash': 'HASH1',
-                },
+                {'key': 'value', '_hash': 'HASH0'},
+                {'key': 'value', '_hash': 'HASH1'},
               ],
               'ref0': 'HASH0',
               'ref1': 'HASH1',
@@ -268,17 +219,10 @@ void main() {
             '_hash': 'ROOT',
             'child0': {
               '_hash': 'CHILD0',
-              'ref': {
-                '_hash': 'CHILD1',
-                'key': 'value',
-              },
+              'ref': {'_hash': 'CHILD1', 'key': 'value'},
             },
-            'CHILD0': {
-              'a': 5,
-            },
-            'CHILD1': {
-              'b': 6,
-            },
+            'CHILD0': {'a': 5},
+            'CHILD1': {'b': 6},
           };
 
           final updateHashes = UpdateHashes(json: json);
@@ -307,17 +251,10 @@ void main() {
               '_hash': 'ROOT',
               'child0': {
                 '_hash': 'CHILD0',
-                'ref': {
-                  '_hash': 'CHILD1',
-                  'key': 'value',
-                },
+                'ref': {'_hash': 'CHILD1', 'key': 'value'},
               },
-              '/CHILD0/CHILD1': {
-                'a': 5,
-              },
-              'child2': {
-                'b': '/CHILD1/CHILD0',
-              },
+              '/CHILD0/CHILD1': {'a': 5},
+              'child2': {'b': '/CHILD1/CHILD0'},
             };
 
             final updateHashes = UpdateHashes(json: json);
@@ -345,17 +282,10 @@ void main() {
               '_hash': 'ROOT',
               'child0': {
                 '_hash': 'CHILD0',
-                'ref': {
-                  '_hash': 'CHILD1',
-                  'key': 'value',
-                },
+                'ref': {'_hash': 'CHILD1', 'key': 'value'},
               },
-              ':CHILD0:CHILD1': {
-                'a': 5,
-              },
-              'child2': {
-                'b': ':CHILD1:CHILD0',
-              },
+              ':CHILD0:CHILD1': {'a': 5},
+              'child2': {'b': ':CHILD1:CHILD0'},
             };
 
             final updateHashes = UpdateHashes(json: json);
@@ -383,17 +313,10 @@ void main() {
               '_hash': 'ROOT',
               'child0': {
                 '_hash': 'CHILD0',
-                'ref': {
-                  '_hash': 'CHILD1',
-                  'key': 'value',
-                },
+                'ref': {'_hash': 'CHILD1', 'key': 'value'},
               },
-              '/CHILD0:CHILD1': {
-                'a': 5,
-              },
-              'child2': {
-                'b': ':CHILD1/CHILD0',
-              },
+              '/CHILD0:CHILD1': {'a': 5},
+              'child2': {'b': ':CHILD1/CHILD0'},
             };
 
             final updateHashes = UpdateHashes(json: json);
@@ -423,22 +346,10 @@ void main() {
           test('should be handled correctly', () {
             const json = {
               '_hash': 'ROOT',
-              'child0': {
-                '_hash': 'A_B',
-                'key': '0',
-              },
-              'child1': {
-                '_hash': 'C_D',
-                'key': '1',
-              },
-              'child3': {
-                '_hash': 'A_B_C_D',
-                'key': '3',
-              },
-              'child4': {
-                'ref': 'A_B_C_D',
-                'key': '4',
-              },
+              'child0': {'_hash': 'A_B', 'key': '0'},
+              'child1': {'_hash': 'C_D', 'key': '1'},
+              'child3': {'_hash': 'A_B_C_D', 'key': '3'},
+              'child4': {'ref': 'A_B_C_D', 'key': '4'},
             };
 
             final uh = UpdateHashes(json: json);
@@ -467,10 +378,7 @@ void main() {
         '_hash': 'WRONG0',
         'key': {
           '_hash': 'WRONG1',
-          'key': {
-            '_hash': 'WRONG2',
-            'key': '1',
-          },
+          'key': {'_hash': 'WRONG2', 'key': '1'},
         },
       };
 
