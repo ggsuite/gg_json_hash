@@ -5,9 +5,9 @@
 // found in the LICENSE file in the root of this package.
 
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:gg_json_hash/src/float_to_string.dart';
 
 // .............................................................................
 /// Options for the JSON hash.
@@ -16,7 +16,7 @@ class HashConfig {
   const HashConfig({
     this.hashLength = 22,
     this.hashAlgorithm = 'SHA-256',
-    this.roundDoubles = true,
+    this.floatToStr = floatToString,
   });
 
   /// Length of the hash.
@@ -25,10 +25,8 @@ class HashConfig {
   /// Algorithm for hashing.
   final String hashAlgorithm;
 
-  /// If smart rounding is enabled, double value are smartly rounded.
-  /// This avoids different hashes for similar values
-  /// (e.g., 1.0000001 and 1.0000002).
-  final bool roundDoubles;
+  /// This method is used to convert a float to a string for hash calculation
+  final String Function(num float) floatToStr;
 
   /// Default configuration.
   static const HashConfig defaultConfig = HashConfig();
@@ -37,12 +35,12 @@ class HashConfig {
   HashConfig copyWith({
     int? hashLength,
     String? hashAlgorithm,
-    bool? roundDoubles,
+    String Function(num float)? floatToStr,
   }) {
     return HashConfig(
       hashLength: hashLength ?? this.hashLength,
       hashAlgorithm: hashAlgorithm ?? this.hashAlgorithm,
-      roundDoubles: roundDoubles ?? this.roundDoubles,
+      floatToStr: floatToStr ?? this.floatToStr,
     );
   }
 }
@@ -311,17 +309,7 @@ class JsonHash {
       if (value.isNaN) {
         throw Exception('NaN is not supported.');
       }
-
-      // Treat double values as integers if they are whole numbers
-      if (value.toInt() == value) {
-        return value.toInt();
-      }
-      // Round the value if configured to do so
-      else if (config.roundDoubles) {
-        return _smartRound(value);
-      } else {
-        return value;
-      }
+      return value;
     }
     // Handle int values
     else if (value is int) {
@@ -498,33 +486,6 @@ class JsonHash {
   }
 
   // ...........................................................................
-  double _smartRound(double value) {
-    final absVal = value.abs();
-
-    int digits;
-    if (absVal < 1) {
-      digits = 6;
-    } else if (absVal < 10) {
-      digits = 6;
-    } else if (absVal < 100) {
-      digits = 5;
-    } else if (absVal < 1000) {
-      digits = 4;
-    } else if (absVal < 10000) {
-      digits = 3;
-    } else if (absVal < 100000) {
-      digits = 2;
-    } else if (absVal < 1000000) {
-      digits = 1;
-    } else {
-      digits = 0;
-    }
-
-    final factor = pow(10, digits);
-    return (value * factor).round() / factor;
-  }
-
-  // ...........................................................................
   /// Converts a map to a JSON string.
   String _jsonString(Map<String, dynamic> map) {
     // Sort the object keys to ensure consistent key order
@@ -536,7 +497,7 @@ class JsonHash {
       } else if (value is bool) {
         return value.toString();
       } else if (value is num) {
-        return _convertBasicType(value).toString();
+        return config.floatToStr(value);
       } else if (value is List) {
         return '[${value.map(encodeValue).join(',')}]';
       } else if (value is Map<String, dynamic>) {

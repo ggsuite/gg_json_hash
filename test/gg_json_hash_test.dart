@@ -175,10 +175,9 @@ void main() {
 
     group('copyWith', () {
       test('returns a new instance with updated config', () {
-        const config = HashConfig(hashLength: 10, roundDoubles: false);
+        const config = HashConfig(hashLength: 10);
         final newJh = jh.copyWith(config: config);
         expect(newJh.config.hashLength, equals(10));
-        expect(newJh.config.roundDoubles, isFalse);
         expect(newJh.config.hashAlgorithm, equals('SHA-256'));
       });
 
@@ -190,10 +189,7 @@ void main() {
             newJh.config.hashLength,
             equals(HashConfig.defaultConfig.hashLength),
           );
-          expect(
-            newJh.config.roundDoubles,
-            equals(HashConfig.defaultConfig.roundDoubles),
-          );
+
           expect(
             newJh.config.hashAlgorithm,
             equals(HashConfig.defaultConfig.hashAlgorithm),
@@ -202,33 +198,44 @@ void main() {
       );
 
       test('does not mutate the original JsonHash instance', () {
-        const config = HashConfig(hashLength: 5, roundDoubles: false);
+        const config = HashConfig(hashLength: 5);
         final newJh = jh.copyWith(config: config);
         expect(jh.config.hashLength, isNot(equals(newJh.config.hashLength)));
-        expect(
-          jh.config.roundDoubles,
-          isNot(equals(newJh.config.roundDoubles)),
-        );
       });
 
       test('copyWith preserves other config fields if not provided', () {
         const config = HashConfig(hashLength: 15, hashAlgorithm: 'SHA-512');
-        final newConfig = config.copyWith(roundDoubles: false);
+        final newConfig = config.copyWith(hashAlgorithm: 'ABC');
         expect(newConfig.hashLength, equals(15));
-        expect(newConfig.hashAlgorithm, equals('SHA-512'));
-        expect(newConfig.roundDoubles, isFalse);
+        expect(newConfig.hashAlgorithm, equals('ABC'));
       });
 
-      test('copyWith changes only specified fields', () {
-        const config = HashConfig(
-          hashLength: 22,
-          hashAlgorithm: 'SHA-256',
-          roundDoubles: true,
-        );
-        final updated = config.copyWith(hashLength: 30);
-        expect(updated.hashLength, equals(30));
-        expect(updated.hashAlgorithm, equals('SHA-256'));
-        expect(updated.roundDoubles, isTrue);
+      test('floatToStr is used when provided', () {
+        String floatToStr(num value) => 'float:${value.toString()}';
+        final config = HashConfig(floatToStr: floatToStr);
+        final newJh = jh.copyWith(config: config);
+        expect(newJh.config.floatToStr, equals(floatToStr));
+        expect(newJh.config.floatToStr(1.23), equals('float:1.23'));
+      });
+
+      test('floatToStr is default when not provided', () {
+        const config = HashConfig(hashLength: 10);
+        final newJh = jh.copyWith(config: config);
+        expect(newJh.config.floatToStr, floatToString);
+      });
+
+      group('hashAlgorithm', () {
+        test('copyWith with hashAlgorithm set', () {
+          const config = HashConfig(hashLength: 10);
+          final newConfig = config.copyWith(hashAlgorithm: 'XYZ');
+          expect(newConfig.hashAlgorithm, 'XYZ');
+        });
+
+        test('without hash algorithm set', () {
+          const config = HashConfig(hashLength: 10);
+          final newConfig = config.copyWith(hashAlgorithm: null);
+          expect(newConfig.hashAlgorithm, 'SHA-256');
+        });
       });
     });
 
@@ -258,6 +265,15 @@ void main() {
               final expectedHash = jh.calcHash('{"key":1}');
               expect(json['_hash'], equals(expectedHash));
               expect(json['_hash'], equals('t4HVsGBJblqznOBwy6IeLt'));
+            });
+
+            test('with a double value with commas', () {
+              final json = jh.apply({'key': 1.1});
+              expect(json['key'], equals(1.1));
+              final rep = floatToString(1.1);
+              final expectedHash = jh.calcHash('{"key":$rep}');
+              expect(json['_hash'], equals(expectedHash));
+              expect(json['_hash'], equals('os2u9CZsQJU7ms_pSpcNyq'));
             });
 
             test('with a bool value', () {
@@ -477,54 +493,21 @@ void main() {
         });
 
         group('data with floating point rounding issues', () {
-          group('with smartRoundDoubles', () {
-            group('true', () {
-              group('rounds floating point numbers depending on size', () {
-                test('i.e. small numbers', () {
-                  final json0 = jh.apply({'key': 0.0123456789});
+          group('rounds floating point numbers depending on size', () {
+            test('i.e. small numbers', () {
+              final json0 = jh.apply({'key': 0.0123456789});
 
-                  final json1 = jh.apply({'key': 0.0123456788});
+              final json1 = jh.apply({'key': 0.0123456788});
 
-                  expect(json0['_hash'], json1['_hash']);
-                });
-
-                test('i.e. large numbers', () {
-                  final json0 = jh.apply({'key': 1234567890.1});
-
-                  final json1 = jh.apply({'key': 1234567890.2});
-
-                  expect(json0['_hash'], json1['_hash']);
-                });
-              });
+              expect(json0['_hash'], json1['_hash']);
             });
 
-            group('false', () {
-              group(
-                'does not round floating point numbers depending on size',
-                () {
-                  setUp(() {
-                    jh = jh.copyWith(
-                      config: jh.config.copyWith(roundDoubles: false),
-                    );
-                  });
+            test('i.e. large numbers', () {
+              final json0 = jh.apply({'key': 12345678901234.111});
 
-                  test('i.e. small numbers', () {
-                    final json0 = jh.apply({'key': 0.0123456789});
+              final json1 = jh.apply({'key': 12345678901234.112});
 
-                    final json1 = jh.apply({'key': 0.0123456788});
-
-                    expect(json0['_hash'], isNot(json1['_hash']));
-                  });
-
-                  test('i.e. large numbers', () {
-                    final json0 = jh.apply({'key': 1234567890.1});
-
-                    final json1 = jh.apply({'key': 1234567890.2});
-
-                    expect(json0['_hash'], isNot(json1['_hash']));
-                  });
-                },
-              );
+              expect(json0['_hash'], json1['_hash']);
             });
           });
         });
@@ -665,7 +648,7 @@ void main() {
       });
 
       group('checks numbers', () {
-        test('.e. throws when NaN is given', () {
+        test('throws when NaN is given', () {
           String? message;
 
           try {
@@ -677,7 +660,7 @@ void main() {
           expect(message, equals('Exception: NaN is not supported.'));
         });
 
-        test('i.e. throws when json contains an unsupported type', () {
+        test('throws when json contains an unsupported type', () {
           String? message;
 
           try {
@@ -689,27 +672,69 @@ void main() {
           expect(message, equals('Exception: Unsupported type: Error'));
         });
 
-        group('i.e. ensures numbers have the right precision', () {
-          group(
-            'i.e. it does not throw when numbers have right maximum precision',
-            () {
-              test('e.g. 1.001', () {
-                expect(() => jh.apply({'key': 1.001}), returnsNormally);
-              });
+        group('ensures numbers have the right precision', () {
+          group('does not throw when numbers have right maximum precision', () {
+            test('e.g. 1.001', () {
+              expect(() => jh.apply({'key': 1.001}), returnsNormally);
+            });
 
-              test('e.g. 1.123', () {
-                expect(() => jh.apply({'key': 1.123}), returnsNormally);
-              });
+            test('e.g. 1.123', () {
+              expect(() => jh.apply({'key': 1.123}), returnsNormally);
+            });
 
-              test('e.g. -1.123', () {
-                expect(() => jh.apply({'key': -1.123}), returnsNormally);
-              });
+            test('e.g. -1.123', () {
+              expect(() => jh.apply({'key': -1.123}), returnsNormally);
+            });
 
-              test('e.g. 1e-2', () {
-                expect(() => jh.apply({'key': 1e-2}), returnsNormally);
-              });
-            },
-          );
+            test('e.g. 1e-2', () {
+              expect(() => jh.apply({'key': 1e-2}), returnsNormally);
+            });
+          });
+        });
+
+        group('ensures numbers are in the given range', () {
+          void check(double val, bool shouldThrow) {
+            String message = '';
+            val = double.parse(val.toStringAsFixed(3));
+
+            try {
+              jh.apply({'key': val, '_hash': ''});
+            } catch (e) {
+              message = e.toString();
+            }
+
+            if (shouldThrow) {
+              expect(
+                message,
+                equals(
+                  'Exception: Float value $val must be between $minFloat and '
+                  '$maxFloat.',
+                ),
+              );
+            } else {
+              expect(message, equals(''));
+            }
+          }
+
+          group('values exceed NumbersConfig.maxNum', () {
+            test('shortly above the maximum', () {
+              check(maxFloat + 0.01, true);
+            });
+
+            test('but not when shortly below the maximum', () {
+              check(maxFloat - 0.01, false);
+            });
+          });
+
+          group('values below NumbersConfig.minNum', () {
+            test('shortly below the minimum', () {
+              check(minFloat - 0.01, true);
+            });
+
+            test('but not when shortly above the minimum', () {
+              check(minFloat + 0.01, false);
+            });
+          });
         });
       });
 

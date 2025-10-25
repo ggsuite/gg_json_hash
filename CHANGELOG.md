@@ -1,10 +1,14 @@
 # Changelog
 
-## [Unreleased]
+## [5.0.0] - 2025-10-25
 
 ### Added
 
 - Add .gitattributes file
+
+### Changed
+
+- BREAKING CHANGE: Fix floating point isses. Different hashes will be generated
 
 ## [4.0.0] - 2025-08-01
 
@@ -168,7 +172,7 @@ to 32Bit floating point precision.
 
 - Increase version
 
-[Unreleased]: https://github.com/inlavigo/gg_json_hash/compare/4.0.0...HEAD
+[5.0.0]: https://github.com/inlavigo/gg_json_hash/compare/4.0.0...5.0.0
 [4.0.0]: https://github.com/inlavigo/gg_json_hash/compare/3.0.1...4.0.0
 [3.0.1]: https://github.com/inlavigo/gg_json_hash/compare/3.0.0...3.0.1
 [3.0.0]: https://github.com/inlavigo/gg_json_hash/compare/2.0.15...3.0.0
