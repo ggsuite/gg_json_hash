@@ -1371,6 +1371,82 @@ void main() {
     });
   });
 
+  group('rmhsh', () {
+    test('removes hashes from simple json', () {
+      final json = {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'};
+      final result = rmhsh(json);
+      expect(result, equals({'key': 'value'}));
+      expect(result.containsKey('_hash'), isFalse);
+    });
+
+    test('removes hashes from nested json', () {
+      final json = {
+        'parent': {
+          'child': {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
+          '_hash': '3Wizz29YgTIc1LRaN9fNfK',
+        },
+        '_hash': 'oEE88mHZ241BRlAfyG8n9X',
+      };
+      final result = rmhsh(json);
+      expect(result['_hash'], isNull);
+      expect(result['parent']['_hash'], isNull);
+      expect(result['parent']['child']['_hash'], isNull);
+      expect(result['parent']['child']['key'], equals('value'));
+    });
+
+    test('removes hashes from json with arrays', () {
+      final json = {
+        'array': [
+          {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'},
+          {'key2': 'value2', '_hash': 'abc123'},
+        ],
+        '_hash': 'root_hash',
+      };
+      final result = rmhsh(json);
+      expect(result['_hash'], isNull);
+      expect(result['array'][0]['_hash'], isNull);
+      expect(result['array'][1]['_hash'], isNull);
+      expect(result['array'][0]['key'], equals('value'));
+      expect(result['array'][1]['key2'], equals('value2'));
+    });
+
+    test('does not mutate original json', () {
+      final json = {'key': 'value', '_hash': '5Dq88zdSRIOcAS-WM_lYYt'};
+      final result = rmhsh(json);
+      expect(json['_hash'], equals('5Dq88zdSRIOcAS-WM_lYYt'));
+      expect(result['_hash'], isNull);
+    });
+
+    test('handles json without hashes', () {
+      final json = {
+        'key': 'value',
+        'nested': {'key2': 'value2'},
+      };
+      final result = rmhsh(json);
+      expect(result, equals(json));
+    });
+
+    test('preserves all other data types', () {
+      final json = {
+        'string': 'test',
+        'int': 42,
+        'double': 3.14,
+        'bool': true,
+        'null': null,
+        'list': [1, 2, 3],
+        '_hash': 'some_hash',
+      };
+      final result = rmhsh(json);
+      expect(result['string'], equals('test'));
+      expect(result['int'], equals(42));
+      expect(result['double'], equals(3.14));
+      expect(result['bool'], equals(true));
+      expect(result['null'], isNull);
+      expect(result['list'], equals([1, 2, 3]));
+      expect(result['_hash'], isNull);
+    });
+  });
+
   group('areEqual', () {
     group('with ignoreHashes', () {
       group('== true', () {

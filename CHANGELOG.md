@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.0.1] - 2025-11-11
+
+### Added
+
+- Add rmsh and removeHashes
+
 ## [5.0.0] - 2025-10-25
 
 ### Added
@@ -172,6 +178,7 @@ to 32Bit floating point precision.
 
 - Increase version
 
+[5.0.1]: https://github.com/inlavigo/gg_json_hash/compare/5.0.0...5.0.1
 [5.0.0]: https://github.com/inlavigo/gg_json_hash/compare/4.0.0...5.0.0
 [4.0.0]: https://github.com/inlavigo/gg_json_hash/compare/3.0.1...4.0.0
 [3.0.1]: https://github.com/inlavigo/gg_json_hash/compare/3.0.0...3.0.1

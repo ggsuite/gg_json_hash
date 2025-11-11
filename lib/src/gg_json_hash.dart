@@ -65,7 +65,7 @@ class JsonHash {
     bool updateExistingHashes = true,
     bool throwOnWrongHashes = true,
   }) {
-    final copy = inPlace ? json : _copyJson(json);
+    final copy = inPlace ? json : _copyJson(json, false);
     _addHashesToObject(
       copy,
       updateExistingHashes: updateExistingHashes,
@@ -86,8 +86,11 @@ class JsonHash {
 
   // ...........................................................................
   /// Deeply copies the JSON object.
-  static Map<String, dynamic> copyJson(Map<String, dynamic> json) {
-    return _copyJson(json);
+  static Map<String, dynamic> copyJson(
+    Map<String, dynamic> json, {
+    bool ignoreHashes = false,
+  }) {
+    return _copyJson(json, ignoreHashes);
   }
 
   /// Returns true if two JSON objects are deeply equal.
@@ -139,6 +142,14 @@ class JsonHash {
     }
 
     return json;
+  }
+
+  // ...........................................................................
+  /// Returns a copy without hashes
+  Map<String, dynamic> removeHashes(Map<String, dynamic> json) {
+    final result = copyJson(json, ignoreHashes: true);
+
+    return result;
   }
 
   // ...........................................................................
@@ -440,16 +451,22 @@ class JsonHash {
 
   // ...........................................................................
   /// Copies the JSON object.
-  static Map<String, dynamic> _copyJson(Map<String, dynamic> json) {
+  static Map<String, dynamic> _copyJson(
+    Map<String, dynamic> json,
+    bool ignoreHashes,
+  ) {
     final copy = <String, dynamic>{};
     for (final key in json.keys) {
+      if (ignoreHashes && key == '_hash') {
+        continue;
+      }
       final value = json[key];
       if (value is List) {
-        copy[key] = _copyList(value);
+        copy[key] = _copyList(value, ignoreHashes);
       } else if (_isBasicType(value)) {
         copy[key] = value;
       } else if (value is Map<String, dynamic>) {
-        copy[key] = _copyJson(value);
+        copy[key] = _copyJson(value, ignoreHashes);
       } else if (value == null) {
         copy[key] = null;
       } else {
@@ -461,15 +478,15 @@ class JsonHash {
 
   // ...........................................................................
   /// Copies the list.
-  static List<dynamic> _copyList(List<dynamic> list) {
+  static List<dynamic> _copyList(List<dynamic> list, bool ignoreHashes) {
     final copy = <dynamic>[];
     for (final element in list) {
       if (element is List) {
-        copy.add(_copyList(element));
+        copy.add(_copyList(element, ignoreHashes));
       } else if (_isBasicType(element)) {
         copy.add(element);
       } else if (element is Map<String, dynamic>) {
-        copy.add(_copyJson(element));
+        copy.add(_copyJson(element, ignoreHashes));
       } else if (element == null) {
         copy.add(null);
       } else {
@@ -536,3 +553,6 @@ final hsh = JsonHash.defaultInstance.apply;
 
 /// Fills empty hashes into
 final amh = JsonHash.defaultInstance.addMissingHashes;
+
+/// Removes hashes from a given JSON structure
+final rmhsh = JsonHash.defaultInstance.removeHashes;
