@@ -72,7 +72,13 @@ class JsonHash {
       throwOnWrongHashes: throwOnWrongHashes,
     );
 
-    if (throwOnWrongHashes) {
+    // When updateExistingHashes is true, _addHashesToObject has just
+    // recalculated the hash of every object in the tree and compared it
+    // against any pre-existing hash (throwing on mismatch). Running
+    // validate() again would recompute the identical hashes a second time
+    // and can never fail. It is only needed when existing hashes were
+    // skipped, i.e. updateExistingHashes is false.
+    if (throwOnWrongHashes && !updateExistingHashes) {
       validate(copy);
     }
     return copy;
@@ -153,13 +159,33 @@ class JsonHash {
   }
 
   // ...........................................................................
+  /// Single-pass fast path for update operations:
+  ///
+  /// Deep-copies [json], fills in missing or empty `_hash` attributes
+  /// bottom up and verifies existing ones against the hash calculated from
+  /// the content. Returns `null` when an existing `_hash` does not match
+  /// the calculated one, i.e. the json needs a real hash update.
+  ///
+  /// When a non-null result is returned it is identical to the result of
+  /// running the full `updateHashes` machinery on [json].
+  Map<String, dynamic>? copyWithVerifiedHashes(Map<String, dynamic> json) {
+    try {
+      return _copyFillVerify(json);
+    } on _StaleHashException {
+      return null;
+    }
+  }
+
+  // ...........................................................................
   /// Calculates a SHA-256 hash of a string with base64 url.
   String calcHash(String input) {
     final bytes = sha256.convert(utf8.encode(input)).bytes;
-    final base64 = base64Encode(bytes).substring(0, config.hashLength);
 
-    // convert to url safe base64
-    return base64.replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+    // base64Url replaces '+' by '-' and '/' by '_' at encoding time, which
+    // yields exactly the same string as encoding with base64 and replacing
+    // the characters afterwards. Only padding '=' needs to be stripped.
+    final base64 = base64UrlEncode(bytes).substring(0, config.hashLength);
+    return base64.replaceAll('=', '');
   }
 
   // ...........................................................................
@@ -266,30 +292,12 @@ class JsonHash {
       }
     }
 
-    // Build a new object to represent the current object for hashing
-    final objToHash = <String, dynamic>{};
-
-    for (final key in obj.keys) {
-      if (key == '_hash') continue;
-
-      final value = obj[key];
-      if (value is Map<String, dynamic>) {
-        objToHash[key] = value['_hash'];
-      } else if (value is List) {
-        objToHash[key] = _flattenList(value);
-      } else if (_isBasicType(value)) {
-        objToHash[key] = _convertBasicType(value);
-      } else if (value == null) {
-        objToHash[key] = null;
-      }
-      // coverage:ignore-start
-      else {
-        throw Exception('Unsupported type: ${value.runtimeType}');
-      }
-      // coverage:ignore-end
-    }
-
-    final sortedMapJson = _jsonString(objToHash);
+    // Build the canonical string representing the current object.
+    // This produces exactly the same string as building an intermediate
+    // "objToHash" map (child objects replaced by their hash, lists
+    // flattened) and serializing it with _jsonString, but in a single pass
+    // without intermediate allocations.
+    final sortedMapJson = _hashPayload(obj);
 
     // Compute the SHA-256 hash of the JSON string
     final hash = calcHash(sortedMapJson);
@@ -341,28 +349,67 @@ class JsonHash {
   }
 
   // ...........................................................................
-  /// Builds a representation of a list for hashing.
-  List<dynamic> _flattenList(List<dynamic> list) {
-    final flattenedList = <dynamic>[];
-
-    for (final element in list) {
-      if (element is Map<String, dynamic>) {
-        flattenedList.add(element['_hash']);
-      } else if (element is List) {
-        flattenedList.add(_flattenList(element));
-      } else if (_isBasicType(element)) {
-        flattenedList.add(_convertBasicType(element));
-      } else if (element == null) {
-        flattenedList.add(null);
+  /// Builds the canonical string that is hashed for [obj].
+  ///
+  /// The `_hash` key is skipped, keys are sorted, child objects are
+  /// represented by their `_hash` value and floats are converted using
+  /// [HashConfig.floatToStr]. The result is identical to serializing the
+  /// flattened "objToHash" representation with [_jsonString].
+  String _hashPayload(Map<String, dynamic> obj) {
+    final keys = <String>[];
+    for (final key in obj.keys) {
+      if (key != '_hash') {
+        keys.add(key);
       }
-      // coverage:ignore-start
-      else {
-        throw Exception('Unsupported type: ${element.runtimeType}');
-      }
-      // coverage:ignore-end
     }
+    keys.sort();
 
-    return flattenedList;
+    final sb = StringBuffer('{');
+    for (var i = 0; i < keys.length; i++) {
+      if (i > 0) {
+        sb.write(',');
+      }
+      final key = keys[i];
+      sb.write('"');
+      sb.write(key);
+      sb.write('":');
+      _writePayloadValue(obj[key], sb);
+    }
+    sb.write('}');
+    return sb.toString();
+  }
+
+  // ...........................................................................
+  /// Writes the canonical hash representation of [value] into [sb].
+  void _writePayloadValue(dynamic value, StringBuffer sb) {
+    if (value is String) {
+      sb.write('"');
+      sb.write(value.replaceAll('"', '\\"'));
+      sb.write('"');
+    } else if (value is Map<String, dynamic>) {
+      // Child objects are represented by their hash
+      _writePayloadValue(value['_hash'], sb);
+    } else if (value is List) {
+      sb.write('[');
+      for (var i = 0; i < value.length; i++) {
+        if (i > 0) {
+          sb.write(',');
+        }
+        _writePayloadValue(value[i], sb);
+      }
+      sb.write(']');
+    } else if (value is bool) {
+      sb.write(value ? 'true' : 'false');
+    } else if (value is num) {
+      if (value is double && value.isNaN) {
+        throw Exception('NaN is not supported.');
+      }
+      sb.write(config.floatToStr(value));
+    } else if (value == null) {
+      sb.write('null');
+    } else {
+      throw Exception('Unsupported type: ${value.runtimeType}');
+    }
   }
 
   // ...........................................................................
@@ -470,6 +517,7 @@ class JsonHash {
       } else if (value == null) {
         copy[key] = null;
       } else {
+        print(key);
         throw Exception('Unsupported type: ${value.runtimeType}');
       }
     }
@@ -500,6 +548,72 @@ class JsonHash {
   /// Checks if a value is a basic type.
   static bool _isBasicType(dynamic value) {
     return value is String || value is num || value is bool;
+  }
+
+  // ...........................................................................
+  /// Copies [obj], fills missing hashes and verifies existing ones.
+  /// Throws [_StaleHashException] when an existing hash does not match.
+  Map<String, dynamic> _copyFillVerify(Map<String, dynamic> obj) {
+    final copy = <String, dynamic>{};
+    var hadHashKey = false;
+
+    for (final key in obj.keys) {
+      final value = obj[key];
+
+      if (key == '_hash') {
+        hadHashKey = true;
+        // Keep the key at its original position.
+        // The value is updated below.
+        copy['_hash'] = value;
+        continue;
+      }
+
+      if (value is Map<String, dynamic>) {
+        copy[key] = _copyFillVerify(value);
+      } else if (value is List) {
+        copy[key] = _copyFillVerifyList(value);
+      } else if (_isBasicType(value)) {
+        copy[key] = value;
+      } else if (value == null) {
+        copy[key] = null;
+      } else {
+        throw Exception('Unsupported type: ${value.runtimeType}');
+      }
+    }
+
+    final calculatedHash = calcHash(_hashPayload(copy));
+    final storedHash = hadHashKey ? obj['_hash'] : null;
+
+    if (storedHash == null || (storedHash is String && storedHash.isEmpty)) {
+      // Missing or empty hash -> fill it.
+      copy['_hash'] = calculatedHash;
+    } else if (storedHash is! String || storedHash != calculatedHash) {
+      // Existing hash is stale (or has an unexpected type):
+      // the caller has to run the full update machinery.
+      throw const _StaleHashException();
+    }
+
+    return copy;
+  }
+
+  // ...........................................................................
+  /// List part of [_copyFillVerify].
+  List<dynamic> _copyFillVerifyList(List<dynamic> list) {
+    final copy = <dynamic>[];
+    for (final element in list) {
+      if (element is Map<String, dynamic>) {
+        copy.add(_copyFillVerify(element));
+      } else if (element is List) {
+        copy.add(_copyFillVerifyList(element));
+      } else if (_isBasicType(element)) {
+        copy.add(element);
+      } else if (element == null) {
+        copy.add(null);
+      } else {
+        throw Exception('Unsupported type: ${element.runtimeType}');
+      }
+    }
+    return copy;
   }
 
   // ...........................................................................
@@ -541,6 +655,13 @@ class JsonHash {
 
     return result.join('');
   }
+}
+
+// ...........................................................................
+/// Internal signal used by [JsonHash.copyWithVerifiedHashes] to abort the
+/// fast path when an existing hash does not match the calculated one.
+class _StaleHashException implements Exception {
+  const _StaleHashException();
 }
 
 // ...........................................................................

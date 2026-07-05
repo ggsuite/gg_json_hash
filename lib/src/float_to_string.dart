@@ -32,9 +32,6 @@ String floatToString(num value) {
     return value.toInt().toString();
   }
 
-  int digits = 2;
-  num factor = precision;
-
   if (value > maxFloat || value < minFloat) {
     throw Exception(
       'Float value $value must be between $minFloat and $maxFloat.',
@@ -43,23 +40,33 @@ String floatToString(num value) {
 
   final absVal = value.abs();
 
-  // Define thresholds and corresponding digits/factors
-  final thresholds = [
-    {'limit': 10, 'digits': 8, 'factor': 1e8},
-    {'limit': 100, 'digits': 7, 'factor': 1e7},
-    {'limit': 1000, 'digits': 6, 'factor': 1e6},
-    {'limit': 10000, 'digits': 5, 'factor': 1e5},
-    {'limit': 100000, 'digits': 4, 'factor': 1e4},
-    {'limit': 1000000, 'digits': 3, 'factor': 1e3},
-    {'limit': 10000000, 'digits': 2, 'factor': 1e2},
-  ];
-
-  for (final t in thresholds) {
-    if (absVal < (t['limit'] as num)) {
-      digits = t['digits'] as int;
-      factor = t['factor'] as num;
-      break;
-    }
+  // Thresholds and corresponding digits/factors
+  int digits;
+  num factor;
+  if (absVal < 10) {
+    digits = 8;
+    factor = 1e8;
+  } else if (absVal < 100) {
+    digits = 7;
+    factor = 1e7;
+  } else if (absVal < 1000) {
+    digits = 6;
+    factor = 1e6;
+  } else if (absVal < 10000) {
+    digits = 5;
+    factor = 1e5;
+  } else if (absVal < 100000) {
+    digits = 4;
+    factor = 1e4;
+  } else if (absVal < 1000000) {
+    digits = 3;
+    factor = 1e3;
+  } else if (absVal < 10000000) {
+    digits = 2;
+    factor = 1e2;
+  } else {
+    digits = 2;
+    factor = precision;
   }
 
   final rounded = (absVal * factor).round();

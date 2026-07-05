@@ -223,8 +223,12 @@ class JsonInfo {
     }
   }
 
+  static final _hashPathSeparatorsRegExp = RegExp(
+    '[${JsonInfo.hashPathSeparators.join('')}]',
+  );
+
   void _processStringValue(String childValue, String parentHash) {
-    final regExp = RegExp('[${JsonInfo.hashPathSeparators.join('')}]');
+    final regExp = _hashPathSeparatorsRegExp;
     final parts = childValue.split(regExp);
 
     for (final childValuePart in parts) {

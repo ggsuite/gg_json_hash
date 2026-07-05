@@ -672,6 +672,21 @@ void main() {
           expect(message, equals('Exception: Unsupported type: Error'));
         });
 
+        test(
+          'throws when json contains an unsupported type, applied in place',
+          () {
+            String? message;
+
+            try {
+              jh.applyInPlace({'key': Error()});
+            } catch (e) {
+              message = e.toString();
+            }
+
+            expect(message, equals('Exception: Unsupported type: Error'));
+          },
+        );
+
         group('ensures numbers have the right precision', () {
           group('does not throw when numbers have right maximum precision', () {
             test('e.g. 1.001', () {
@@ -999,6 +1014,7 @@ void main() {
             }),
             '{"a":{"b":1}}',
           );
+          expect(jsonString({'a': 1, 'b': 2}), '{"a":1,"b":2}');
         });
 
         test('throws when unsupported type', () {
@@ -1025,6 +1041,21 @@ void main() {
 
         test('with a double', () {
           expect(jh.testConvertBasicType(true), true);
+        });
+
+        test('with a non-nan double', () {
+          expect(jh.testConvertBasicType(1.5), 1.5);
+        });
+
+        test('with a NaN double', () {
+          String message = '';
+          try {
+            jh.testConvertBasicType(double.nan);
+          } catch (e) {
+            message = e.toString();
+          }
+
+          expect(message, 'Exception: NaN is not supported.');
         });
 
         test('with a non-basic type', () {
@@ -1349,6 +1380,115 @@ void main() {
           expect(json['_hash'], equals('W4CAuZT_tIicr6crbn6LA8'));
         });
       });
+    });
+  });
+
+  group('copyWithVerifiedHashes', () {
+    test('returns a copy when all existing hashes are up to date', () {
+      final json = hsh({'key': 'value'});
+
+      final result = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+      expect(result, equals(json));
+      expect(identical(result, json), isFalse);
+    });
+
+    test('returns null when an existing hash is stale', () {
+      final json = hsh({'key': 'value'});
+      json['key'] = 'changed';
+
+      final result = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+      expect(result, isNull);
+    });
+
+    test('fills in a missing hash', () {
+      final json = {'key': 'value'};
+
+      final result = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+      expect(result, equals(hsh(json)));
+    });
+
+    test('recursively verifies nested maps and lists', () {
+      final json = hsh({
+        'child': {'key': 'value'},
+        'list': [
+          {'key': 'value'},
+          [
+            {'key': 'value2'},
+          ],
+        ],
+      });
+
+      final result = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+      expect(result, equals(json));
+    });
+
+    test('returns null when a nested map hash is stale', () {
+      final json = hsh({
+        'child': {'key': 'value'},
+      });
+      (json['child'] as Map<String, dynamic>)['key'] = 'changed';
+
+      final result = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+      expect(result, isNull);
+    });
+
+    test('returns null when a hash nested in a list is stale', () {
+      final json = hsh({
+        'list': [
+          {'key': 'value'},
+        ],
+      });
+      ((json['list'] as List)[0] as Map<String, dynamic>)['key'] = 'changed';
+
+      final result = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+      expect(result, isNull);
+    });
+
+    test('keeps null values', () {
+      final json = {'key': null};
+
+      final result = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+      expect(result, equals(hsh(json)));
+    });
+
+    test('throws when the json contains an unsupported type', () {
+      String? message;
+      try {
+        JsonHash.defaultInstance.copyWithVerifiedHashes({'key': Error()});
+      } catch (e) {
+        message = e.toString();
+      }
+      expect(message, equals('Exception: Unsupported type: Error'));
+    });
+
+    test('keeps basic type values inside a list', () {
+      final json = {
+        'list': ['a', 1, true],
+      };
+
+      final result = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+      expect(result, equals(hsh(json)));
+    });
+
+    test('keeps null values inside a list', () {
+      final json = {
+        'list': [null],
+      };
+
+      final result = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+      expect(result, equals(hsh(json)));
+    });
+
+    test('throws when a list contains an unsupported type', () {
+      String? message;
+      try {
+        JsonHash.defaultInstance.copyWithVerifiedHashes({
+          'list': [Error()],
+        });
+      } catch (e) {
+        message = e.toString();
+      }
+      expect(message, equals('Exception: Unsupported type: Error'));
     });
   });
 

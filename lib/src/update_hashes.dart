@@ -162,6 +162,17 @@ class UpdateHashes {
 
 /// Updates the hashes in a given Json structure as well their usages
 Map<String, dynamic> updateHashes(Map<String, dynamic> json) {
+  // Fast path: when all existing hashes are up to date, updating reduces
+  // to copying the json and filling in missing hashes. No references need
+  // to be translated (references contain hashes of other objects, and none
+  // of these hashes change), no dependency graphs need to be built, and
+  // neither ambiguous hashes with unequal content nor circular hash
+  // references can exist when every hash matches its content.
+  final fastResult = JsonHash.defaultInstance.copyWithVerifiedHashes(json);
+  if (fastResult != null) {
+    return fastResult;
+  }
+
   final updater = UpdateHashes(json: json);
   updater.apply();
   return updater.updatedJson;
