@@ -1,5 +1,5 @@
 // @license
-// Copyright (c) 2019 - 2024 Dr. Gabriel Gatzsche. All Rights Reserved.
+// Copyright (c) ggsuite
 //
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
@@ -390,9 +390,8 @@ void main() {
           final json = jsonDecode(exampleJson) as Map<String, dynamic>;
           final hashedJson = jh.apply(json);
 
-          final hashedJsonString = const JsonEncoder.withIndent(
-            '  ',
-          ).convert(hashedJson);
+          final hashedJsonString = const JsonEncoder.withIndent('  ')
+              .convert(hashedJson);
           expect(hashedJsonString, equals(exampleJsonWithHashes));
         });
 
