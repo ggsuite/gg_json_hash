@@ -390,9 +390,8 @@ void main() {
           final json = jsonDecode(exampleJson) as Map<String, dynamic>;
           final hashedJson = jh.apply(json);
 
-          final hashedJsonString = const JsonEncoder.withIndent(
-            '  ',
-          ).convert(hashedJson);
+          final hashedJsonString = const JsonEncoder.withIndent('  ')
+              .convert(hashedJson);
           expect(hashedJsonString, equals(exampleJsonWithHashes));
         });
 
