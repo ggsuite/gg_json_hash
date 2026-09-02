@@ -9,4 +9,4 @@
 // coverage:ignore-file
 
 /// The version of the `gg_json_hash` package.
-const String ggJsonHashVersion = '5.2.0';
+const String ggJsonHashVersion = '5.3.0';
